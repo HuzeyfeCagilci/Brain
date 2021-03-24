@@ -35,6 +35,42 @@ int milisn;
 #define True 1
 #define False 0
 
+/* Example for using delay_stc
+void foo(void *)
+{
+	static delay_stc stc;
+	dly_init(&stc);
+	static int id=0;
+
+	while(stc.run)
+	{	
+		switch (id)
+		{
+		case 0:
+			id++;
+			Serial.println(id);
+			mydelay(1000, &stc);
+			break;
+
+		case 1:
+			id=0;
+			Serial.println(id);
+			mydelay(1000, &stc);
+			break;
+
+		default : id = 0;
+			break;
+		}
+	}
+}
+*/
+
+/*
+Use this to allow delay in functions within the loop
+	dly_init(delay_stc *stc)
+
+	
+*/
 struct delay_struct
 {
 	int delay_time;
@@ -68,6 +104,7 @@ struct Service
 
 struct Service_node
 {
+	int id;
 	struct Service serv;
 	struct Service_node *next;
 };
@@ -79,20 +116,23 @@ typedef struct Service Service;
 typedef struct Service_node Service_node;
 
 // Use this at the top of function.
-inline void dly_init(delay_stc *stc);
+void dly_init(delay_stc *stc);
 // Use this where you want to delay.
-inline void mydelay(int time, delay_stc *stc);
+void mydelay(int time, delay_stc *stc);
 // Compare the time and run the func if is_it_time
-inline void run(Service *srv);
+void run(Service *srv);
 
 Service_node *Service_node_init();
 int Service_node_size(Service_node *head);
-inline void Service_node_add(Service_node *head, Service serv);
-inline void run_Service_node(Service_node *head);
+void Service_node_add(Service_node *head, Service serv);
+void Service_node_run(Service_node *head);
+void Service_node_delete(Service_node **head, int id);
 
-inline void Task_node_add(Task_node *head, Task task);
 Task Task_node_pop(Task_node **head);
-inline void Task_node_run(Task_node **head);
+int Task_node_size(Task_node *head);
+void Task_node_add(Task_node *head, Task task);
+void Task_node_run(Task_node **head);
+void Task_node_loop_run(Task_node *head);
 
 #ifdef Long_time
 

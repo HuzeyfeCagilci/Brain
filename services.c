@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include "services.h"
 
-inline void dly_init(delay_stc *stc)
+void dly_init(delay_stc *stc)
 {
 	if (!stc->open)
 		stc->run = True;
@@ -13,7 +13,7 @@ inline void dly_init(delay_stc *stc)
 	}
 }
 
-inline void mydelay(int time, delay_stc *stc)
+void mydelay(int time, delay_stc *stc)
 {
 	stc->run = False;
 	stc->delay_time = time;
@@ -21,7 +21,7 @@ inline void mydelay(int time, delay_stc *stc)
 	stc->open = True;
 }
 
-inline void run(Service *srv)
+void run(Service *srv)
 {
 	if (srv->stopped)
 		return;
@@ -37,8 +37,9 @@ inline void run(Service *srv)
 	}
 }
 
-inline void Service_node_add(Service_node *head, Service serv)
+void Service_node_add(Service_node *head, Service serv)
 {
+	static int id = 0;
 	if (head == 0)
 		return;
 
@@ -48,8 +49,36 @@ inline void Service_node_add(Service_node *head, Service serv)
 	}
 
 	head->serv = serv;
+	head->id = id++;
 	head->next = (Service_node *)malloc(sizeof(Service_node));
 	head->next->next = 0;
+}
+
+void Service_node_delete(Service_node **head, int id)
+{
+	Service_node *tmp = *head, *prev;
+
+	if (tmp != 0 && tmp->id == id)
+	{
+		*head = tmp->next;
+		free(tmp);
+	}
+
+	else
+	{
+		while (tmp != 0 && tmp->id != id)
+		{
+			prev = tmp;
+			tmp = tmp->next;
+		}
+
+		if (tmp->next == 0)
+			return;
+
+		prev->next = tmp->next;
+
+		free(tmp);
+	}
 }
 
 Service_node *Service_node_init()
@@ -61,16 +90,16 @@ Service_node *Service_node_init()
 
 int Service_node_size(Service_node *head)
 {
-	int ret=0;
-	while(head->next!=0)
+	int ret = 0;
+	while (head->next != 0)
 	{
-		head=head->next;
+		head = head->next;
 		ret++;
 	}
 	return ret;
 }
 
-inline void run_Service_node(Service_node *head)
+void Service_node_run(Service_node *head)
 {
 	while (head->next != 0)
 	{
@@ -86,7 +115,18 @@ Task_node *Task_node_init()
 	return head;
 }
 
-inline void Task_node_add(Task_node *head, Task task)
+int Task_node_size(Task_node *head)
+{
+	int ret = 0;
+	while (head->next != 0)
+	{
+		head = head->next;
+		ret++;
+	}
+	return ret;
+}
+
+void Task_node_add(Task_node *head, Task task)
 {
 	if (head == 0)
 		return;
@@ -105,17 +145,26 @@ Task Task_node_pop(Task_node **head)
 {
 	Task_node *tmp = *head, *prev;
 	*head = tmp->next;
-	Task ret=tmp->task;
+	Task ret = tmp->task;
 	free(tmp);
 	return ret;
 }
 
-inline void Task_node_run(Task_node **head)
+void Task_node_run(Task_node **head)
 {
 	while ((*head)->next != 0)
 	{
 		Task task = Task_node_pop(head);
 		task.func(task.argv);
+	}
+}
+
+void Task_node_loop_run(Task_node *head)
+{
+	while(head->next != 0)
+	{
+		head->task.func(head->task.argv);
+		head=head->next;
 	}
 }
 
