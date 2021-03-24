@@ -4,21 +4,21 @@
 inline void dly_init(delay_stc *stc)
 {
 	if (!stc->open)
-		stc->run = true;
+		stc->run = True;
 	else if ((milisn > stc->begin && milisn - stc->begin >= stc->delay_time) || (milisn < stc->begin && milisn - stc->begin + DV >= stc->delay_time))
 	{
-		stc->run = true;
+		stc->run = True;
 		stc->delay_time = 0;
-		stc->open = false;
+		stc->open = False;
 	}
 }
 
 inline void mydelay(int time, delay_stc *stc)
 {
-	stc->run = false;
+	stc->run = False;
 	stc->delay_time = time;
 	stc->begin = milisn;
-	stc->open = true;
+	stc->open = True;
 }
 
 inline void run(Service *srv)
@@ -28,12 +28,12 @@ inline void run(Service *srv)
 
 	if (is_it_time(milisn, srv->loop_time, srv->ok))
 	{
-		srv->ok = false;
+		srv->ok = False;
 		(*srv->func)(srv->argv);
 	}
 	else if (isnt_it_time(milisn, srv->loop_time, srv->ok))
 	{
-		srv->ok = true;
+		srv->ok = True;
 	}
 }
 
