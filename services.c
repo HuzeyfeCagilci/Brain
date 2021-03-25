@@ -1,3 +1,6 @@
+#ifndef SERVICES_C
+#define SERVICES_C
+
 #include <stdlib.h>
 #include "services.h"
 
@@ -52,6 +55,7 @@ void Service_node_add(Service_node *head, Service serv)
 	head->id = id++;
 	head->next = (Service_node *)malloc(sizeof(Service_node));
 	head->next->next = 0;
+	head->next->id = -1;
 }
 
 void Service_node_delete(Service_node **head, int id)
@@ -115,9 +119,9 @@ Task_node *Task_node_init()
 	return head;
 }
 
-int Task_node_size(Task_node *head)
+byte Task_node_size(Task_node *head)
 {
-	int ret = 0;
+	byte ret = 0;
 	while (head->next != 0)
 	{
 		head = head->next;
@@ -126,19 +130,51 @@ int Task_node_size(Task_node *head)
 	return ret;
 }
 
-void Task_node_add(Task_node *head, Task task)
+int Task_node_add(Task_node *head, Task task)
 {
+	static byte id = 0;
 	if (head == 0)
-		return;
+		return -1;
 
 	while (head->next != 0)
 	{
 		head = head->next;
 	}
 
+	head->id = id++;
 	head->task = task;
 	head->next = (Task_node *)malloc(sizeof(Task_node));
 	head->next->next = 0;
+	head->next->id = -1;
+
+	return head->id;
+}
+
+void Task_node_delete(Task_node **head, int id)
+{
+	Task_node *tmp = *head, *prev;
+
+	if (tmp != 0 && tmp->id == id)
+	{
+		*head = tmp->next;
+		free(tmp);
+	}
+
+	else
+	{
+		while (tmp != 0 && tmp->id != id)
+		{
+			prev = tmp;
+			tmp = tmp->next;
+		}
+
+		if (tmp->next == 0)
+			return;
+
+		prev->next = tmp->next;
+
+		free(tmp);
+	}
 }
 
 Task Task_node_pop(Task_node **head)
@@ -161,10 +197,10 @@ void Task_node_run(Task_node **head)
 
 void Task_node_loop_run(Task_node *head)
 {
-	while(head->next != 0)
+	while (head->next != 0)
 	{
 		head->task.func(head->task.argv);
-		head=head->next;
+		head = head->next;
 	}
 }
 
@@ -194,3 +230,4 @@ ISR(TIMER1_COMPA_vect)
 }
 
 #endif
+#endif //SERVICES_C

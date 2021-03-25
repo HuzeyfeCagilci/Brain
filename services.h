@@ -12,6 +12,8 @@
 	For 'y', we will use 'Task::loop_time' variable.
 	For 'z', we will use 'Task::ok' variable.
 */
+#include <Arduino.h>
+
 #ifndef SERVICES_H
 #define SERVICES_H
 
@@ -39,7 +41,7 @@ int milisn;
 void foo(void *)
 {
 	static delay_stc stc;
-	dly_init(&stc);
+	dly_init(&stc);			// if stc.open == 1 , stc.run will be 0
 	static int id=0;
 
 	while(stc.run)
@@ -68,8 +70,6 @@ void foo(void *)
 /*
 Use this to allow delay in functions within the loop
 	dly_init(delay_stc *stc)
-
-	
 */
 struct delay_struct
 {
@@ -89,9 +89,10 @@ struct Task
 
 struct Task_node
 {
+	byte id;
 	struct Task task;
 	struct Task_node *next;
-};
+}__attribute__((packed, aligned(1)));
 
 struct Service
 {
@@ -128,9 +129,11 @@ void Service_node_add(Service_node *head, Service serv);
 void Service_node_run(Service_node *head);
 void Service_node_delete(Service_node **head, int id);
 
+Task_node *Task_node_init();
 Task Task_node_pop(Task_node **head);
-int Task_node_size(Task_node *head);
-void Task_node_add(Task_node *head, Task task);
+byte Task_node_size(Task_node *head);
+int Task_node_add(Task_node *head, Task task);
+void Task_node_delete(Task_node **head, int id);
 void Task_node_run(Task_node **head);
 void Task_node_loop_run(Task_node *head);
 
