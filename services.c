@@ -40,11 +40,17 @@ void run(Service *srv)
 	}
 }
 
-void Service_node_add(Service_node *head, Service serv)
+Service_node *Service_node_init()
 {
-	static int id = 0;
+	Service_node *head = (Service_node *)malloc(sizeof(Service_node));
+	head->next = 0;
+	return head;
+}
+
+byte Service_node_add(Service_node *head, Service serv)
+{
 	if (head == 0)
-		return;
+		return -1;
 
 	while (head->next != 0)
 	{
@@ -52,10 +58,23 @@ void Service_node_add(Service_node *head, Service serv)
 	}
 
 	head->serv = serv;
-	head->id = id++;
+	head->id = __id__;
 	head->next = (Service_node *)malloc(sizeof(Service_node));
 	head->next->next = 0;
 	head->next->id = -1;
+
+	return __id__++;
+}
+
+byte Service_node_size(Service_node *head)
+{
+	byte ret = 0;
+	while (head->next != 0)
+	{
+		head = head->next;
+		ret++;
+	}
+	return ret;
 }
 
 void Service_node_delete(Service_node **head, int id)
@@ -85,24 +104,6 @@ void Service_node_delete(Service_node **head, int id)
 	}
 }
 
-Service_node *Service_node_init()
-{
-	Service_node *head = (Service_node *)malloc(sizeof(Service_node));
-	head->next = 0;
-	return head;
-}
-
-int Service_node_size(Service_node *head)
-{
-	int ret = 0;
-	while (head->next != 0)
-	{
-		head = head->next;
-		ret++;
-	}
-	return ret;
-}
-
 void Service_node_run(Service_node *head)
 {
 	while (head->next != 0)
@@ -119,6 +120,15 @@ Task_node *Task_node_init()
 	return head;
 }
 
+Task Task_node_pop(Task_node **head)
+{
+	Task_node *tmp = *head, *prev;
+	*head = tmp->next;
+	Task ret = tmp->task;
+	free(tmp);
+	return ret;
+}
+
 byte Task_node_size(Task_node *head)
 {
 	byte ret = 0;
@@ -130,9 +140,8 @@ byte Task_node_size(Task_node *head)
 	return ret;
 }
 
-int Task_node_add(Task_node *head, Task task)
+byte Task_node_add(Task_node *head, Task task)
 {
-	static byte id = 0;
 	if (head == 0)
 		return -1;
 
@@ -141,13 +150,13 @@ int Task_node_add(Task_node *head, Task task)
 		head = head->next;
 	}
 
-	head->id = id++;
+	head->id = __id__;
 	head->task = task;
 	head->next = (Task_node *)malloc(sizeof(Task_node));
 	head->next->next = 0;
 	head->next->id = -1;
 
-	return head->id;
+	return __id__++;
 }
 
 void Task_node_delete(Task_node **head, int id)
@@ -175,15 +184,6 @@ void Task_node_delete(Task_node **head, int id)
 
 		free(tmp);
 	}
-}
-
-Task Task_node_pop(Task_node **head)
-{
-	Task_node *tmp = *head, *prev;
-	*head = tmp->next;
-	Task ret = tmp->task;
-	free(tmp);
-	return ret;
 }
 
 void Task_node_run(Task_node **head)

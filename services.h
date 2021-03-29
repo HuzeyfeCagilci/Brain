@@ -67,6 +67,12 @@ void foo(void *)
 }
 */
 
+#if defined(atrr)
+#define _atr_(x) __attribute__(x)
+#else
+#define _atr_(x)
+#endif
+
 /*
 Use this to allow delay in functions within the loop
 	dly_init(delay_stc *stc)
@@ -75,24 +81,23 @@ struct delay_struct
 {
 	int delay_time;
 	int no;
-	int ret;
 	int begin;
 	_Bool run;
 	_Bool open;
-};
+}_atr_((packed, aligned(1)));
 
 struct Task
 {
 	void (*func)(void *);
 	void *argv;
-};
+}_atr_((packed, aligned(1)));
 
 struct Task_node
 {
 	byte id;
 	struct Task task;
 	struct Task_node *next;
-}__attribute__((packed, aligned(1)));
+}_atr_((packed, aligned(1)));
 
 struct Service
 {
@@ -101,14 +106,14 @@ struct Service
 	int loop_time;
 	_Bool ok;
 	_Bool stopped;
-};
+}_atr_((packed, aligned(1)));
 
 struct Service_node
 {
-	int id;
+	byte id;
 	struct Service serv;
 	struct Service_node *next;
-};
+}_atr_((packed, aligned(1)));
 
 typedef struct delay_struct delay_stc;
 typedef struct Task Task;
@@ -122,17 +127,19 @@ void dly_init(delay_stc *stc);
 void mydelay(int time, delay_stc *stc);
 // Compare the time and run the func if is_it_time
 void run(Service *srv);
+// Every Task_node / Service_node has an id.
+byte __id__;
 
 Service_node *Service_node_init();
-int Service_node_size(Service_node *head);
-void Service_node_add(Service_node *head, Service serv);
-void Service_node_run(Service_node *head);
+byte Service_node_size(Service_node *head);
+byte Service_node_add(Service_node *head, Service serv);
 void Service_node_delete(Service_node **head, int id);
+void Service_node_run(Service_node *head);
 
 Task_node *Task_node_init();
 Task Task_node_pop(Task_node **head);
 byte Task_node_size(Task_node *head);
-int Task_node_add(Task_node *head, Task task);
+byte Task_node_add(Task_node *head, Task task);
 void Task_node_delete(Task_node **head, int id);
 void Task_node_run(Task_node **head);
 void Task_node_loop_run(Task_node *head);

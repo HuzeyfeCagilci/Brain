@@ -3,14 +3,11 @@
 #include "mem/MemoryFree.h"
 #include "mem/MemoryFree.cpp"
 
-void blink(void *led);
-void sr_read(void *argv);
-void yazdir_tsk(void *argv);
-
-int led = LED_BUILTIN;
-int l2 = 5;
-int l3 = 6;
-int id;
+void yaz(void);
+void yaz_i(void);
+void blink(void);
+void info(void);
+void yazdir_tsk(void);
 
 Service_node *head;
 Task_node *hd;
@@ -18,41 +15,29 @@ Task_node *lp;
 
 void setup()
 {
+	__id__ = 0;
 	Serial.begin(9600);
-	pinMode(led, OUTPUT);
 
-	Serial.print(F("Boş bellek = "));
+	Serial.print(F("Bos bellek = "));
 	Serial.println(freeMemory());
 
-	head = Service_node_init();
-	//char ya[] PROGMEM = {"çok kere yazılacak."};
-
-	Service_node_add(head, {&blink, &led, 1000, 1, 0});
-	//Service_node_add(head, {&yaz, &ya, 750, 1, 0});
-
-	hd = Task_node_init();
-	lp = Task_node_init();
-
-	//Service_node_add(head, {&yazdir_tsk, &lp, 3000, 1, 0});
-	//Task_node_add(hd, {&yaz, &ya});
-	id = Task_node_add(lp, {&foo, NULL});
-	Serial.print("id = ");
-	Serial.println(id);
-	//Task_node_add(lp, {&foo2, NULL});
-	//info(NULL);
 	Serial.print(F("Size of Task = "));
 	Serial.println(sizeof(struct Task));
 	Serial.print(F("Size of Task_node = "));
 	Serial.println(sizeof(struct Task_node));
+	Serial.print(F("Size of Service = "));
+	Serial.println(sizeof(struct Service));
+	Serial.print(F("Size of Service_node = "));
+	Serial.println(sizeof(struct Service_node));
 	Serial.println(F("-------------------"));
 }
 
 void loop()
 {
-	milisn = millis() % DV;
+	/*milisn = millis() % DV;
 	Service_node_run(head);
 	Task_node_run(&hd);
-	Task_node_loop_run(lp);
+	Task_node_loop_run(lp);*/
 }
 
 void yaz(void *argv)
@@ -83,7 +68,7 @@ void blink(void *led_ptr)
 		ok = true;
 	}
 }
-
+/* 
 void foo(void *)
 {
 	static delay_stc stc;
@@ -201,7 +186,7 @@ void foo3(void *)
 			Serial.println(F("\nFoo3'ten selamlar.\n"));
 		}
 	}
-}
+} */
 
 void info(void *)
 {
