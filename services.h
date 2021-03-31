@@ -67,7 +67,8 @@ void foo(void *)
 }
 */
 
-#if defined(atrr)
+#define atrr
+#ifdef atrr
 #define _atr_(x) __attribute__(x)
 #else
 #define _atr_(x)
