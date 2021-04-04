@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include "services.h"
 #include "services.c"
 
@@ -9,6 +10,12 @@ void yazdir_tsk(void);
 
 extern void *__data_end;
 extern void *__bss_end;
+
+struct blink_stc
+{
+	int led;
+	_Bool ok;
+} bl1;
 
 Service_node *head;
 //Task_node *hd;
@@ -70,18 +77,17 @@ void yaz_i(void *argv)
 
 void blink(void *led_ptr)
 {
-	int _led = *(int *)led_ptr;
-	static bool ok = false;
+	blink_stc *stc = (blink_stc *)led_ptr;
 
-	if (ok)
+	if (stc->ok)
 	{
-		digitalWrite(_led, LOW);
-		ok = false;
+		digitalWrite(stc->led, LOW);
+		stc->ok = false;
 	}
 	else
 	{
-		digitalWrite(_led, HIGH);
-		ok = true;
+		digitalWrite(stc->led, HIGH);
+		stc->ok = true;
 	}
 }
 
