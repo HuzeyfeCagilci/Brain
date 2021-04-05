@@ -2,16 +2,16 @@
  * Version: 1.1
  */
 
-/*  
-'x' is an integer that keeps elapsed time in miliseconds.
-	We will use the 'milisn' variable for 'x'.
-	'y' is an integer that keeps the loop time.
-	'z' is a boolean variable.
+ /*
+ 'x' is an integer that keeps elapsed time in miliseconds.
+	 We will use the 'milisn' variable for 'x'.
+	 'y' is an integer that keeps the loop time.
+	 'z' is a boolean variable.
 
-	For 'x', we will use remainder after 'millis()' is divided by 'DV'.
-	For 'y', we will use 'Task::loop_time' variable.
-	For 'z', we will use 'Task::ok' variable.
-*/
+	 For 'x', we will use remainder after 'millis()' is divided by 'DV'.
+	 For 'y', we will use 'Task::loop_time' variable.
+	 For 'z', we will use 'Task::ok' variable.
+ */
 
 #include <Arduino.h>
 #ifndef SERVICES_H
@@ -20,18 +20,18 @@
 #define is_it_time(x, y, z) (x % y == 0 && z)
 #define isnt_it_time(x, y, z) (x % y != 0 && !z)
 
-/*
-milisn = millis() % DV;
-	milisn is the remainder after millis() is divided by DV.
-	Unless this method, there will be overflow errors.
-*/
+ /*
+ milisn = millis() % DV;
+	 milisn is the remainder after millis() is divided by DV.
+	 Unless this method, there will be overflow errors.
+ */
 #define DV 10000
 
-/*
-This variable, holds the elapsed time.
-	in loop() function
-		milisn=millis()%DV
-*/
+ /*
+ This variable, holds the elapsed time.
+	 in loop() function
+		 milisn=millis()%DV
+ */
 int milisn;
 
 #define True 1
@@ -45,7 +45,7 @@ void foo(void *)
 	static int id=0;
 
 	while(stc.run)
-	{	
+	{
 		switch (id)
 		{
 		case 0:
@@ -89,21 +89,21 @@ struct delay_struct
 
 struct Task
 {
-	void (*func)(void *);
-	void *argv;
+	void (*func)(void*);
+	void* argv;
 }_atr_((packed, aligned(1)));
 
 struct Task_node
 {
 	byte id;
 	struct Task task;
-	struct Task_node *next;
+	struct Task_node* next;
 }_atr_((packed, aligned(1)));
 
 struct Service
 {
-	void (*func)(void *argv);
-	void *argv;
+	void (*func)(void* argv);
+	void* argv;
 	int loop_time;
 	_Bool ok;
 	_Bool stopped;
@@ -113,7 +113,7 @@ struct Service_node
 {
 	byte id;
 	struct Service serv;
-	struct Service_node *next;
+	struct Service_node* next;
 }_atr_((packed, aligned(1)));
 
 typedef struct delay_struct delay_stc;
@@ -123,27 +123,38 @@ typedef struct Service Service;
 typedef struct Service_node Service_node;
 
 // Use this at the top of function.
-void dly_init(delay_stc *stc);
+void dly_init(delay_stc* stc);
 // Use this where you want to delay.
-void mydelay(int time, delay_stc *stc);
-// Compare the time and run the func if is_it_time
-void run(Service *srv);
+void mydelay(int time, delay_stc* stc);
+
 // Every Task_node / Service_node has an id.
 byte __id__;
 
-Service_node *Service_node_init();
-byte Service_node_size(Service_node *head);
-byte Service_node_add(Service_node *head, Service serv);
-void Service_node_delete(Service_node **head, int id);
-void Service_node_run(Service_node *head);
+typedef enum { Success, Malloc_fail, Cannot_find } Node_return;
 
-Task_node *Task_node_init();
-Task Task_node_pop(Task_node **head);
+
+// delete the last node and return it
+Task node_pop(Task_node** head);
+// Compare the time and run the func if is_it_time
+void run(Service* srv);
+Task_node* Task_node_init();
+Service_node* Service_node_init();
+byte Service_node_size(Service_node* head);
+
+byte Task_node_add(Task_node** head, Task task);
+byte Service_node_add(Service_node** head, Service serv);
 byte Task_node_size(Task_node *head);
-byte Task_node_add(Task_node *head, Task task);
-void Task_node_delete(Task_node **head, int id);
+byte Service_node_size(Service_node *head);
+
 void Task_node_run(Task_node **head);
+// pop last node and run
+void Service_node_run(Service_node *head);
+// don't pop, just run
 void Task_node_loop_run(Task_node *head);
+
+Node_return Task_node_delete(Task_node** head, byte id);
+Node_return Service_node_delete(Service_node** head, byte id);
+
 
 #ifdef Long_time
 

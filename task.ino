@@ -28,6 +28,8 @@ int freeRam ()
   return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval); 
 }
 
+int ids[10];
+
 void setup()
 {
 	__id__ = 0;
@@ -51,7 +53,7 @@ void setup()
 	Serial.println(sizeof(struct delay_struct));
 	
 	head = Service_node_init();
-	Service_node_add(head, {info, NULL, 1000, 1, 0});
+	Service_node_add(&head, {info, NULL, 1000, 1, 0});
 
 	info(NULL);
 	Serial.println(F("-------------------"));

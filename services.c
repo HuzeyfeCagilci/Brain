@@ -47,23 +47,15 @@ Service_node *Service_node_init()
 	return head;
 }
 
-byte Service_node_add(Service_node *head, Service serv)
+byte Task_node_size(Task_node *head)
 {
-	if (head == 0)
-		return -1;
-
+	byte ret = 0;
 	while (head->next != 0)
 	{
 		head = head->next;
+		ret++;
 	}
-
-	head->serv = serv;
-	head->id = __id__;
-	head->next = (Service_node *)malloc(sizeof(Service_node));
-	head->next->next = 0;
-	head->next->id = -1;
-
-	return __id__++;
+	return ret;
 }
 
 byte Service_node_size(Service_node *head)
@@ -77,36 +69,27 @@ byte Service_node_size(Service_node *head)
 	return ret;
 }
 
-void Service_node_delete(Service_node **head, int id)
+void Task_node_run(Task_node **head)
 {
-	Service_node *tmp = *head, *prev;
-
-	if (tmp != 0 && tmp->id == id)
+	while ((*head) != 0)
 	{
-		*head = tmp->next;
-		free(tmp);
+		Task task = node_pop(head);
+		task.func(task.argv);
 	}
+}
 
-	else
+void Task_node_loop_run(Task_node *head)
+{
+	while (head != 0)
 	{
-		while (tmp != 0 && tmp->id != id)
-		{
-			prev = tmp;
-			tmp = tmp->next;
-		}
-
-		if (tmp->next == 0)
-			return;
-
-		prev->next = tmp->next;
-
-		free(tmp);
+		head->task.func(head->task.argv);
+		head = head->next;
 	}
 }
 
 void Service_node_run(Service_node *head)
 {
-	while (head->next != 0)
+	while (head != 0)
 	{
 		run(&head->serv);
 		head = head->next;
@@ -129,79 +112,87 @@ Task Task_node_pop(Task_node **head)
 	return ret;
 }
 
-byte Task_node_size(Task_node *head)
+byte Task_node_add(Task_node **head, Task task)
 {
-	byte ret = 0;
-	while (head->next != 0)
-	{
-		head = head->next;
-		ret++;
-	}
-	return ret;
+	Task_node *new_node = (Task_node *)malloc(sizeof(Task_node));
+	if (new_node == 0)
+		return Malloc_fail;
+	new_node->task = task;
+	new_node->next = *head;
+	new_node->id = ++__id__;
+	*head = new_node;
+	return new_node->id;
 }
 
-byte Task_node_add(Task_node *head, Task task)
+byte Service_node_add(Service_node **head, Service serv)
 {
-	if (head == 0)
-		return -1;
-
-	while (head->next != 0)
-	{
-		head = head->next;
-	}
-
-	head->id = __id__;
-	head->task = task;
-	head->next = (Task_node *)malloc(sizeof(Task_node));
-	head->next->next = 0;
-	head->next->id = -1;
-
-	return __id__++;
+	Service_node *new_node = (Service_node *)malloc(sizeof(Service_node));
+	if (new_node == 0)
+		return Malloc_fail;
+	new_node->serv = serv;
+	new_node->next = *head;
+	new_node->id = ++__id__;
+	*head = new_node;
+	return new_node->id;
 }
 
-void Task_node_delete(Task_node **head, int id)
-{
-	Task_node *tmp = *head, *prev;
 
-	if (tmp != 0 && tmp->id == id)
+Node_return Task_node_delete(Task_node **head, byte id)
+{
+	Task_node *tmp;
+
+	if((*head)->id==id)
 	{
-		*head = tmp->next;
+		if(*head==NULL) return Cannot_find;
+		tmp=*head;
+		*head=tmp->next;
 		free(tmp);
+		return Success;
 	}
 
-	else
+	tmp=*head;
+	Task_node *prev;
+
+	while(tmp->id != id)
 	{
-		while (tmp != 0 && tmp->id != id)
-		{
-			prev = tmp;
-			tmp = tmp->next;
-		}
+		if(tmp==NULL) return Cannot_find;
+		prev=tmp;
+		tmp=tmp->next;
+	}
 
-		if (tmp->next == 0)
-			return;
+	prev->next=tmp->next;
+	free(tmp);
 
-		prev->next = tmp->next;
+	return Success;
+}
 
+Node_return Service_node_delete(Service_node **head, byte id)
+{
+	Service_node *tmp;
+
+	if((*head)->id==id)
+	{
+		if(*head==NULL) return Cannot_find;
+		tmp=*head;
+		*head=tmp->next;
 		free(tmp);
+		return Success;
 	}
-}
 
-void Task_node_run(Task_node **head)
-{
-	while ((*head)->next != 0)
-	{
-		Task task = Task_node_pop(head);
-		task.func(task.argv);
-	}
-}
+	tmp=*head;
+	Service_node *prev;
 
-void Task_node_loop_run(Task_node *head)
-{
-	while (head->next != 0)
+	while(tmp->id != id)
 	{
-		head->task.func(head->task.argv);
-		head = head->next;
+		if(tmp==NULL) return Cannot_find;
+		prev=tmp;
+		tmp=tmp->next;
 	}
+
+	prev->next=tmp->next;
+	free(tmp);
+
+	return Success;
 }
 
 #ifdef Long_time
