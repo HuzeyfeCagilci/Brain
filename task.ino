@@ -1,12 +1,14 @@
 #include <Arduino.h>
 #include "task.h"
 #include "task.c"
+#include "task.ino.h"
 
 void yaz(void);
 void yaz_i(void);
 void blink(void);
 void info(void);
 void yazdir_tsk(void);
+void foo(void *){};
 
 extern void *__data_end;
 extern void *__bss_end;
@@ -54,6 +56,11 @@ void setup()
 	
 	head = Service_node_init();
 	Service_node_add(&head, {info, NULL, 1000, 1, 0});
+	ids[0]=Service_node_add(&head, {foo, NULL, 1000, 1, 0});
+	ids[1]=Service_node_add(&head, {foo, NULL, 1000, 1, 0});
+
+	SSil(&head, ids[0]);
+	SSil(&head, ids[1]);
 
 	info(NULL);
 	Serial.println(F("-------------------"));
