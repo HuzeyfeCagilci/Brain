@@ -1,8 +1,8 @@
-#ifndef SERVICES_C
-#define SERVICES_C
+#ifndef TASK_C
+#define TASK_C
 
 #include <stdlib.h>
-#include "services.h"
+#include "task.h"
 
 void dly_init(delay_stc *stc)
 {

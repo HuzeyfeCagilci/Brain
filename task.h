@@ -14,8 +14,8 @@
  */
 
 #include <Arduino.h>
-#ifndef SERVICES_H
-#define SERVICES_H
+#ifndef TASK_H
+#define TASK_H
 
 #define is_it_time(x, y, z) (x % y == 0 && z)
 #define isnt_it_time(x, y, z) (x % y != 0 && !z)
