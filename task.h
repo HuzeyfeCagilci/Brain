@@ -1,168 +1,226 @@
-/* Author: Huzeyfe Çağılcı
- * Version: 1.1
- */
-
- /*
- 'x' is an integer that keeps elapsed time in miliseconds.
-	 We will use the 'milisn' variable for 'x'.
-	 'y' is an integer that keeps the loop time.
-	 'z' is a boolean variable.
-
-	 For 'x', we will use remainder after 'millis()' is divided by 'DV'.
-	 For 'y', we will use 'Task::loop_time' variable.
-	 For 'z', we will use 'Task::ok' variable.
- */
-
-#include <Arduino.h>
 #ifndef TASK_H
 #define TASK_H
 
-#define is_it_time(x, y, z) (x % y == 0 && z)
-#define isnt_it_time(x, y, z) (x % y != 0 && !z)
+#include <stdlib.h>
+#include "task_declarations.h"
 
- /*
- milisn = millis() % DV;
-	 milisn is the remainder after millis() is divided by DV.
-	 Unless this method, there will be overflow errors.
- */
-#define DV 10000
-
- /*
- This variable, holds the elapsed time.
-	 in loop() function
-		 milisn=millis()%DV
- */
-int milisn;
-
-#define True 1
-#define False 0
-
-/* Example for using delay_stc
-void foo(void *)
+INLINE void dly_init(delay_stc *stc)
 {
-	static delay_stc stc;
-	dly_init(&stc);			// if stc.open == 1 , stc.run will be 0
-	static int id=0;
-
-	while(stc.run)
+	if (!stc->open)
+		stc->run = True;
+	else if ((_time_ > stc->begin && _time_ - stc->begin >= stc->delay_time) || (_time_ < stc->begin && _time_ - stc->begin + DV >= stc->delay_time))
 	{
-		switch (id)
-		{
-		case 0:
-			id++;
-			Serial.println(id);
-			mydelay(1000, &stc);
-			break;
-
-		case 1:
-			id=0;
-			Serial.println(id);
-			mydelay(1000, &stc);
-			break;
-
-		default : id = 0;
-			break;
-		}
+		stc->run = True;
+		stc->delay_time = 0;
+		stc->open = False;
 	}
 }
-*/
 
-#define atrr
-#ifdef atrr
-#define _atr_(x) __attribute__(x)
-#else
-#define _atr_(x)
-#endif
-
-/*
-Use this to allow delay in functions within the loop
-	dly_init(delay_stc *stc)
-*/
-struct delay_struct
+INLINE void mydelay(int time, delay_stc *stc)
 {
-	int delay_time;
-	int no;
-	int begin;
-	_Bool run;
-	_Bool open;
-}_atr_((packed, aligned(1)));
+	stc->run = False;
+	stc->delay_time = time;
+	stc->begin = _time_;
+	stc->open = True;
+}
 
-struct Task
+INLINE void run(Service *srv)
 {
-	void (*func)(void*);
-	void* argv;
-}_atr_((packed, aligned(1)));
+	if (srv->stopped)
+		return;
 
-struct Task_node
+	if (is_it_time(_time_, srv->loop_time, srv->ok))
+	{
+		srv->ok = False;
+		(*srv->func)(srv->argv);
+	}
+	else if (isnt_it_time(_time_, srv->loop_time, srv->ok))
+	{
+		srv->ok = True;
+	}
+}
+
+INLINE Service_node *Service_node_init()
 {
-	byte id;
-	struct Task task;
-	struct Task_node* next;
-}_atr_((packed, aligned(1)));
+	Service_node *head = (Service_node *)malloc(sizeof(Service_node));
+	head->next = 0;
+	return head;
+}
 
-struct Service
+INLINE byte Task_node_size(Task_node *head)
 {
-	void (*func)(void* argv);
-	void* argv;
-	int loop_time;
-	_Bool ok;
-	_Bool stopped;
-}_atr_((packed, aligned(1)));
+	byte ret = 0;
+	while (head->next != 0)
+	{
+		head = head->next;
+		ret++;
+	}
+	return ret;
+}
 
-struct Service_node
+INLINE byte Service_node_size(Service_node *head)
 {
-	byte id;
-	struct Service serv;
-	struct Service_node* next;
-}_atr_((packed, aligned(1)));
+	byte ret = 0;
+	while (head->next != 0)
+	{
+		head = head->next;
+		ret++;
+	}
+	return ret;
+}
 
-typedef struct delay_struct delay_stc;
-typedef struct Task Task;
-typedef struct Task_node Task_node;
-typedef struct Service Service;
-typedef struct Service_node Service_node;
+INLINE void Task_node_run(Task_node **head)
+{
+	while ((*head) != 0)
+	{
+		Task task = node_pop(head);
+		task.func(task.argv);
+	}
+}
 
-// Use this at the top of function.
-void dly_init(delay_stc* stc);
-// Use this where you want to delay.
-void mydelay(int time, delay_stc* stc);
+INLINE void Task_node_loop_run(Task_node *head)
+{
+	while (head != 0)
+	{
+		head->task.func(head->task.argv);
+		head = head->next;
+	}
+}
 
-// Every Task_node / Service_node has an id.
-byte __id__;
+INLINE void Service_node_run(Service_node *head)
+{
+	while (head != 0)
+	{
+		run(&head->serv);
+		head = head->next;
+	}
+}
 
-typedef enum { Success, Malloc_fail, Cannot_find } Node_return;
+INLINE Task_node *Task_node_init()
+{
+	Task_node *head = (Task_node *)malloc(sizeof(Task_node));
+	head->next = 0;
+	return head;
+}
+
+INLINE Task Task_node_pop(Task_node **head)
+{
+	Task_node *tmp = *head, *prev;
+	*head = tmp->next;
+	Task ret = tmp->task;
+	free(tmp);
+	return ret;
+}
+
+INLINE byte Task_node_add(Task_node **head, Task task)
+{
+	Task_node *new_node = (Task_node *)malloc(sizeof(Task_node));
+	if (new_node == 0)
+		return Malloc_fail;
+	new_node->task = task;
+	new_node->next = *head;
+	new_node->id = ++__id__;
+	*head = new_node;
+	return new_node->id;
+}
+
+INLINE byte Service_node_add(Service_node **head, Service serv)
+{
+	Service_node *new_node = (Service_node *)malloc(sizeof(Service_node));
+	if (new_node == 0)
+		return Malloc_fail;
+	new_node->serv = serv;
+	new_node->next = *head;
+	new_node->id = ++__id__;
+	*head = new_node;
+	return new_node->id;
+}
 
 
-// delete the last node and return it
-Task node_pop(Task_node** head);
-// Compare the time and run the func if is_it_time
-void run(Service* srv);
-Task_node* Task_node_init();
-Service_node* Service_node_init();
-byte Service_node_size(Service_node* head);
+INLINE Node_return Task_node_delete(Task_node **head, byte id)
+{
+	Task_node *tmp;
 
-byte Task_node_add(Task_node** head, Task task);
-byte Service_node_add(Service_node** head, Service serv);
-byte Task_node_size(Task_node *head);
-byte Service_node_size(Service_node *head);
+	if((*head)->id==id)
+	{
+		if(*head==NULL) return Cannot_find;
+		tmp=*head;
+		*head=tmp->next;
+		free(tmp);
+		return Success;
+	}
 
-void Task_node_run(Task_node **head);
-// pop last node and run
-void Service_node_run(Service_node *head);
-// don't pop, just run
-void Task_node_loop_run(Task_node *head);
+	tmp=*head;
+	Task_node *prev;
 
-Node_return Task_node_delete(Task_node** head, byte id);
-Node_return Service_node_delete(Service_node** head, byte id);
+	while(tmp->id != id)
+	{
+		if(tmp==NULL) return Cannot_find;
+		prev=tmp;
+		tmp=tmp->next;
+	}
 
+	prev->next=tmp->next;
+	free(tmp);
+
+	return Success;
+}
+
+INLINE Node_return Service_node_delete(Service_node **head, byte id)
+{
+	Service_node *tmp;
+
+	if((*head)->id==id)
+	{
+		if(*head==NULL) return Cannot_find;
+		tmp=*head;
+		*head=tmp->next;
+		free(tmp);
+		return Success;
+	}
+
+	tmp=*head;
+	Service_node *prev;
+
+	while(tmp->id != id)
+	{
+		if(tmp==NULL) return Cannot_find;
+		prev=tmp;
+		tmp=tmp->next;
+	}
+
+	prev->next=tmp->next;
+	free(tmp);
+
+	return Success;
+}
 
 #ifdef Long_time
 
-volatile char second = 0;
-volatile char minute = 0;
-volatile char hour = 0;
+ISR(TIMER1_COMPA_vect)
+{
+	cli();
 
-inline void _timer1_set_up(int hz)
+	second++;
+
+	if (second == 60)
+	{
+		minute++;
+		second = 0;
+	}
+
+	if (minute == 60)
+	{
+		hour++;
+		minute = 0;
+	}
+
+	Serial.println((int)second);
+
+	sei();
+}
+
+INLINE void _timer1_set_up(int hz)
 {
 	cli();
 	TCCR1A = 0; // set entire TCCR1A register to 0
@@ -179,7 +237,5 @@ inline void _timer1_set_up(int hz)
 	sei();
 }
 
-#define timer1_set_up() _timer1_set_up(1)
-
 #endif
-#endif //SERVICES_H
+#endif // TASK.H
