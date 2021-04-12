@@ -37,6 +37,9 @@
  */
 long _time_;
 
+// Every Task_node / Service_node has an id.
+byte __id__;
+
 /* Sometimes, there may be an error about "True" or "False". */
 
 #define True 1
@@ -73,16 +76,19 @@ void foo(void *)
 */
 
 #ifdef _inline_
+#ifndef INLINE
 #define INLINE inline
+#endif // INLINE
 #else
+#ifndef INLINE
 #define INLINE
+#endif // INLINE
 #endif // _inline_
 
-#define atrr
 #ifdef atrr
-#define _atr_(x) __attribute__(x)
+#define _atr_ __attribute__((packed, aligned(1)))
 #else
-#define _atr_(x)
+#define _atr_
 #endif // attr
 
 /*
@@ -96,20 +102,20 @@ struct delay_struct
 	int begin;
 	_Bool run;
 	_Bool open;
-} _atr_((packed, aligned(1)));
+} _atr_;
 
 struct Task
 {
 	void (*func)(void *);
 	void *argv;
-} _atr_((packed, aligned(1)));
+} _atr_;
 
 struct Task_node
 {
 	byte id;
 	struct Task task;
 	struct Task_node *next;
-} _atr_((packed, aligned(1)));
+} _atr_;
 
 struct Service
 {
@@ -118,28 +124,20 @@ struct Service
 	int loop_time;
 	_Bool ok;
 	_Bool stopped;
-} _atr_((packed, aligned(1)));
+} _atr_;
 
 struct Service_node
 {
 	byte id;
 	struct Service serv;
 	struct Service_node *next;
-} _atr_((packed, aligned(1)));
+} _atr_;
 
 typedef struct delay_struct delay_stc;
 typedef struct Task Task;
 typedef struct Task_node Task_node;
 typedef struct Service Service;
 typedef struct Service_node Service_node;
-
-// Use this at the top of function.
-INLINE void dly_init(delay_stc *stc);
-// Use this where you want to delay.
-INLINE void mydelay(int time, delay_stc *stc);
-
-// Every Task_node / Service_node has an id.
-byte __id__;
 
 typedef enum
 {
@@ -148,6 +146,10 @@ typedef enum
 	Cannot_find
 } Node_return;
 
+// Use this at the top of function.
+INLINE void dly_init(delay_stc* stc);
+// Use this where you want to delay.
+INLINE void mydelay(int time, delay_stc* stc);
 // delete the last node and return it
 INLINE Task node_pop(Task_node **head);
 // Compare the time and run the func if is_it_time

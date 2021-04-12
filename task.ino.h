@@ -13,11 +13,23 @@ void foo(void *argv) {}
 extern void *__data_end;
 extern void *__bss_end;
 
-struct blink_stc
+#ifdef attr
+#ifndef _atr_
+#define _atr_ __attribute__((packed, aligned(1)))
+#endif // _atr_
+#else
+#ifndef _atr_
+#define _atr_
+#endif // _atr_
+#endif // atrr
+
+struct blink_struct
 {
 	int led;
 	_Bool ok;
-} bl1;
+}_atr_;
+
+typedef blink_struct blink_stc;
 
 void blink(void *led_ptr)
 {
