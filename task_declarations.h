@@ -7,15 +7,15 @@
 #define TASK_DECLARATIONS_H
 
 /*
- 'x' is an integer that keeps elapsed time in miliseconds.
-	 We will use the '_time_' variable for 'x'.
-	 'y' is an integer that keeps the loop time.
-	 'z' is a boolean variable.
+  'x' is an integer that keeps elapsed time in miliseconds.
+	  We will use the '_time_' variable for 'x'.
+	  'y' is an integer that keeps the loop time.
+	  'z' is a boolean variable.
 
-	 For 'x', we will use remainder after 'millis()' is divided by 'DV'.
-	 For 'y', we will use 'Task::loop_time' variable.
-	 For 'z', we will use 'Task::ok' variable.
- */
+	  For 'x', we will use remainder after 'millis()' is divided by 'DV'.
+	  For 'y', we will use 'Task::loop_time' variable.
+	  For 'z', we will use 'Task::ok' variable.
+  */
 #define is_it_time(x, y, z) (x % y == 0 && z)
 /* "NOT" type of is_it_time macro. */
 #define isnt_it_time(x, y, z) (x % y != 0 && !z)
@@ -31,10 +31,10 @@
 #define DV 100000
 
 /*
- This variable, holds the elapsed time.
-	 in loop() function
-		 _time_ = millis () %DV
- */
+  This variable, holds the elapsed time.
+	  in loop() function
+		  _time_ = millis () %DV
+  */
 long _time_;
 
 // Every Task_node / Service_node has an id.
@@ -97,9 +97,9 @@ Use this to allow delay in functions within the loop
 */
 struct delay_struct
 {
-	int delay_time;
-	int no;
-	int begin;
+	long delay_time;
+	long begin;
+	byte no;
 	_Bool run;
 	_Bool open;
 } _atr_;
@@ -147,9 +147,9 @@ typedef enum
 } Node_return;
 
 // Use this at the top of function.
-INLINE void dly_init(delay_stc* stc);
+INLINE void dly_init(delay_stc *stc);
 // Use this where you want to delay.
-INLINE void mydelay(int time, delay_stc* stc);
+INLINE void mydelay(int time, delay_stc *stc);
 // delete the last node and return it
 INLINE Task node_pop(Task_node **head);
 // Compare the time and run the func if is_it_time
@@ -163,8 +163,8 @@ INLINE byte Service_node_add(Service_node **head, Service serv);
 INLINE byte Task_node_size(Task_node *head);
 INLINE byte Service_node_size(Service_node *head);
 
-INLINE void Task_node_run(Task_node **head);
 // pop last node and run
+INLINE void Task_node_run(Task_node **head);
 INLINE void Service_node_run(Service_node *head);
 // don't pop, just run
 INLINE void Task_node_loop_run(Task_node *head);
