@@ -1,5 +1,9 @@
 #include "task.h"
 
+Service_node *head;
+Task_node *hd;
+//Task_node *lp;
+
 void yaz(void *argv);
 void yaz_i(void *argv);
 void blink(void *argv);
@@ -27,7 +31,7 @@ struct blink_struct
 {
 	int led;
 	_Bool ok;
-}_atr_;
+} _atr_;
 
 typedef blink_struct blink_stc;
 
@@ -38,13 +42,14 @@ void blink(void *led_ptr)
 	if (stc->ok)
 	{
 		digitalWrite(stc->led, LOW);
-		stc->ok = false;
+		stc->ok = False;
 	}
 	else
 	{
 		digitalWrite(stc->led, HIGH);
-		stc->ok = true;
+		stc->ok = True;
 	}
+	//Serial.println(F("blink"));
 }
 
 void SSil(Service_node **head, byte id)
@@ -53,11 +58,11 @@ void SSil(Service_node **head, byte id)
 	switch (ret)
 	{
 	case Success:
-		Serial.print("Succesfully deleted node whose id is ");
+		Serial.print(F("Succesfully deleted node whose id is "));
 		Serial.println(id);
 		break;
 	case Cannot_find:
-		Serial.println("There isn't node whose id is ");
+		Serial.println(F("There isn't node whose id is "));
 		Serial.println(id);
 		break;
 	default:
@@ -90,23 +95,9 @@ void info(void *)
 	Serial.println(freeRam());
 }
 
-void iter(void *arg)
-{
-	int *argv = (int *)arg;
-	if (*argv == 5)
-	{
-		SSil(&head, ids[0]);
-		SSil(&head, ids[1]);
-		SSil(&head, ids[2]);
-		free(arg);
-	}
-	Serial.println(*argv);
-	*argv = *argv + 1;
-}
-
 void yazdir_tsk(void *argv)
 {
-	Task_node *node = *((Task_node **)argv);
+	Task_node *node = (Task_node *)argv;
 	int i = 0;
 	while (node != 0)
 	{
@@ -116,11 +107,11 @@ void yazdir_tsk(void *argv)
 			Serial.println(F("Aşım gerçekleşti."));
 			return;
 		}
-		Serial.print("adres = ");
+		Serial.print(F("adres = "));
 		Serial.println((int)node);
-		Serial.print("id = ");
-		Serial.println(node->id);
-		Serial.print("next = ");
+		Serial.print(F("id = "));
+		Serial.println((byte)node->id);
+		Serial.print(F("next = "));
 		Serial.println((int)node->next);
 		node = node->next;
 	}

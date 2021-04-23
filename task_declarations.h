@@ -33,9 +33,11 @@
 /*
   This variable, holds the elapsed time.
 	  in loop() function
-		  _time_ = millis () %DV
+		  _time_ = millis() % DV
   */
 long _time_;
+
+#define UPT (_time_ = millis() % DV)
 
 // Every Task_node / Service_node has an id.
 byte __id__;
@@ -50,25 +52,25 @@ void foo(void *)
 {
 	static delay_stc stc;
 	dly_init(&stc);			// if stc.open == 1 , stc.run will be 0
-	static int id=0;
 
 	while(stc.run)
 	{
-		switch (id)
+		switch (stc.no)
 		{
 		case 0:
-			id++;
-			Serial.println(id);
+			stc.no++;
+			Serial.println(stc.no);
 			mydelay(1000, &stc);
 			break;
 
 		case 1:
-			id=0;
-			Serial.println(id);
+			stc.no=0;
+			Serial.println(stc.no);
 			mydelay(1000, &stc);
 			break;
 
-		default : id = 0;
+		default: 
+			stc.no = 0;
 			break;
 		}
 	}
@@ -121,9 +123,10 @@ struct Service
 {
 	void (*func)(void *argv);
 	void *argv;
-	int loop_time;
+	long loop_time;
 	_Bool ok;
 	_Bool stopped;
+	long last;
 } _atr_;
 
 struct Service_node
@@ -150,14 +153,13 @@ typedef enum
 INLINE void dly_init(delay_stc *stc);
 // Use this where you want to delay.
 INLINE void mydelay(int time, delay_stc *stc);
-// delete the last node and return it
-INLINE Task node_pop(Task_node **head);
 // Compare the time and run the func if is_it_time
 INLINE void run(Service *srv);
-INLINE Task_node *Task_node_init();
-INLINE Service_node *Service_node_init();
-INLINE byte Service_node_size(Service_node *head);
 
+// delete the last node and return it
+INLINE Task Task_node_pop(Task_node **head);
+
+INLINE byte Service_node_size(Service_node *head);
 INLINE byte Task_node_add(Task_node **head, Task task);
 INLINE byte Service_node_add(Service_node **head, Service serv);
 INLINE byte Task_node_size(Task_node *head);

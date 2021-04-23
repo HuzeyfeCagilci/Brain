@@ -1,24 +1,20 @@
 #include <Arduino.h>
 #include "task.h"
-
-Service_node *head;
-//Task_node *hd;
-//Task_node *lp;
-
-int ids[10];
-
 #include "task.ino.h"
+
+blink_stc bl = {LED_BUILTIN, 0};
+int ids[4];
 
 void setup()
 {
 	__id__ = 0;
 	Serial.begin(9600);
 
+	pinMode(LED_BUILTIN, OUTPUT);
+
 	info(NULL);
 
-	int *iterator = (int *)malloc(sizeof(int));
-	*iterator = 0;
-
+	Serial.println(F("-------------------"));
 	Serial.print(F("Size of int = "));
 	Serial.println(sizeof(int));
 	Serial.print(F("__data_end = "));
@@ -36,17 +32,8 @@ void setup()
 	Serial.print(F("Size of delay_stc = "));
 	Serial.println(sizeof(struct delay_struct));
 
-	Service_node_add(&head, {info, NULL, 1000, 1, 0});
-	ids[0] = Service_node_add(&head, {foo, NULL, 1000, 1, 0});
-	ids[1] = Service_node_add(&head, {foo, NULL, 1000, 1, 0});
-	ids[2] = Service_node_add(&head, {iter, iterator, 1000, 1, 0});
+	Service_node_add(&head, {blink, &bl, 1000});
 
 	info(NULL);
 	Serial.println(F("-------------------"));
-}
-
-void loop()
-{
-	_time_ = millis() % DV;
-	Service_node_run(head);
 }

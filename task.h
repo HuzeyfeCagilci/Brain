@@ -29,7 +29,7 @@ INLINE void run(Service *srv)
 	if (srv->stopped)
 		return;
 
-	if (is_it_time(_time_, srv->loop_time, srv->ok))
+	/*if (is_it_time(_time_, srv->loop_time, srv->ok))
 	{
 		srv->ok = False;
 		(*srv->func)(srv->argv);
@@ -37,14 +37,47 @@ INLINE void run(Service *srv)
 	else if (isnt_it_time(_time_, srv->loop_time, srv->ok))
 	{
 		srv->ok = True;
-	}
-}
+	}*/
 
-INLINE Service_node *Service_node_init()
-{
-	Service_node *head = (Service_node *)malloc(sizeof(Service_node));
-	head->next = 0;
-	return head;
+	UPT;
+	if (srv->last <= _time_)
+	{
+		if (srv->ok)
+		{
+			if (_time_ - srv->last >= srv->loop_time)
+			{
+				srv->ok = False;
+				(*srv->func)(srv->argv);
+				srv->last = _time_;
+			}
+		}
+		else
+		{
+			if (_time_ - srv->last < srv->loop_time)
+			{
+				srv->ok = True;
+			}
+		}
+	}
+	else
+	{
+		if (srv->ok)
+		{
+			if (_time_ + (DV - srv->last) >= srv->loop_time)
+			{
+				srv->ok = False;
+				(*srv->func)(srv->argv);
+				srv->last = _time_;
+			}
+		}
+		else
+		{
+			if (_time_ + (DV - srv->last) < srv->loop_time)
+			{
+				srv->ok = True;
+			}
+		}
+	}
 }
 
 INLINE byte Task_node_size(Task_node *head)
@@ -73,7 +106,7 @@ INLINE void Task_node_run(Task_node **head)
 {
 	while ((*head) != 0)
 	{
-		Task task = node_pop(head);
+		Task task = Task_node_pop(head);
 		task.func(task.argv);
 	}
 }
@@ -96,16 +129,9 @@ INLINE void Service_node_run(Service_node *head)
 	}
 }
 
-INLINE Task_node *Task_node_init()
-{
-	Task_node *head = (Task_node *)malloc(sizeof(Task_node));
-	head->next = 0;
-	return head;
-}
-
 INLINE Task Task_node_pop(Task_node **head)
 {
-	Task_node *tmp = *head, *prev;
+	Task_node *tmp = *head;
 	*head = tmp->next;
 	Task ret = tmp->task;
 	free(tmp);
@@ -115,8 +141,10 @@ INLINE Task Task_node_pop(Task_node **head)
 INLINE byte Task_node_add(Task_node **head, Task task)
 {
 	Task_node *new_node = (Task_node *)malloc(sizeof(Task_node));
+
 	if (new_node == 0)
-		return Malloc_fail;
+		return 0;
+
 	new_node->task = task;
 	new_node->next = *head;
 	new_node->id = ++__id__;
@@ -127,40 +155,43 @@ INLINE byte Task_node_add(Task_node **head, Task task)
 INLINE byte Service_node_add(Service_node **head, Service serv)
 {
 	Service_node *new_node = (Service_node *)malloc(sizeof(Service_node));
+
 	if (new_node == 0)
-		return Malloc_fail;
-	new_node->serv = serv;
+		return 0;
+
 	new_node->next = *head;
+	new_node->serv = serv;
 	new_node->id = ++__id__;
 	*head = new_node;
 	return new_node->id;
 }
 
-
 INLINE Node_return Task_node_delete(Task_node **head, byte id)
 {
 	Task_node *tmp;
 
-	if((*head)->id==id)
+	if ((*head)->id == id)
 	{
-		if(*head==NULL) return Cannot_find;
-		tmp=*head;
-		*head=tmp->next;
+		if (*head == NULL)
+			return Cannot_find;
+		tmp = *head;
+		*head = tmp->next;
 		free(tmp);
 		return Success;
 	}
 
-	tmp=*head;
+	tmp = *head;
 	Task_node *prev;
 
-	while(tmp->id != id)
+	while (tmp->id != id)
 	{
-		if(tmp==NULL) return Cannot_find;
-		prev=tmp;
-		tmp=tmp->next;
+		if (tmp == NULL)
+			return Cannot_find;
+		prev = tmp;
+		tmp = tmp->next;
 	}
 
-	prev->next=tmp->next;
+	prev->next = tmp->next;
 	free(tmp);
 
 	return Success;
@@ -170,26 +201,28 @@ INLINE Node_return Service_node_delete(Service_node **head, byte id)
 {
 	Service_node *tmp;
 
-	if((*head)->id==id)
+	if ((*head)->id == id)
 	{
-		if(*head==NULL) return Cannot_find;
-		tmp=*head;
-		*head=tmp->next;
+		if (*head == NULL)
+			return Cannot_find;
+		tmp = *head;
+		*head = tmp->next;
 		free(tmp);
 		return Success;
 	}
 
-	tmp=*head;
+	tmp = *head;
 	Service_node *prev;
 
-	while(tmp->id != id)
+	while (tmp->id != id)
 	{
-		if(tmp==NULL) return Cannot_find;
-		prev=tmp;
-		tmp=tmp->next;
+		if (tmp == NULL)
+			return Cannot_find;
+		prev = tmp;
+		tmp = tmp->next;
 	}
 
-	prev->next=tmp->next;
+	prev->next = tmp->next;
 	free(tmp);
 
 	return Success;
