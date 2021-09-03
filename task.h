@@ -1,144 +1,72 @@
-#ifndef TASK_H
-#define TASK_H
+#ifndef Tash_h
+#define Tash_h
 
 #include <stdlib.h>
-#include "task_declarations.h"
+#include "task_dec.h"
 
-INLINE void dly_init(delay_stc *stc)
+INLINE Task Task_create(void (*func)(void *), void *argv, uint16_t count, _task_type_ type)
 {
-	if (!stc->open)
-		stc->run = True;
-	else if ((_time_ > stc->begin && _time_ - stc->begin >= stc->delay_time) || (_time_ < stc->begin && _time_ - stc->begin + DV >= stc->delay_time))
-	{
-		stc->run = True;
-		stc->delay_time = 0;
-		stc->open = False;
-	}
+	Task task = {func, argv, count, type};
+	return task;
 }
 
-INLINE void mydelay(int time, delay_stc *stc)
+INLINE Task_arg *Task_arg_create(void *argv, uint64_t delay)
 {
-	stc->run = False;
-	stc->delay_time = time;
-	stc->begin = _time_;
-	stc->open = True;
+	Task_arg *task_arg = (Task_arg *)malloc(sizeof(Task_arg));
+	task_arg->argv = argv;
+	task_arg->delay = delay;
+	task_arg->last = DV;
+	task_arg->turn = 0;
+	return task_arg;
 }
 
-INLINE void run(Service *srv)
+INLINE bool check_time(Task_arg *targ)
 {
-	if (srv->stopped)
-		return;
-
-	/*if (is_it_time(_time_, srv->loop_time, srv->ok))
+	if (targ->last <= _time_)
 	{
-		srv->ok = False;
-		(*srv->func)(srv->argv);
-	}
-	else if (isnt_it_time(_time_, srv->loop_time, srv->ok))
-	{
-		srv->ok = True;
-	}*/
-
-	UPT;
-	if (srv->last <= _time_)
-	{
-		if (srv->ok)
+		if (targ->turn)
 		{
-			if (_time_ - srv->last >= srv->loop_time)
+			if (_time_ - targ->last >= targ->delay)
 			{
-				srv->ok = False;
-				(*srv->func)(srv->argv);
-				srv->last = _time_;
+				targ->turn = false;
+				targ->last = _time_;
+				return true;
 			}
 		}
 		else
 		{
-			if (_time_ - srv->last < srv->loop_time)
+			if (_time_ - targ->last < targ->delay)
 			{
-				srv->ok = True;
+				targ->turn = true;
+				return false;
 			}
 		}
 	}
 	else
 	{
-		if (srv->ok)
+		if (targ->turn)
 		{
-			if (_time_ + (DV - srv->last) >= srv->loop_time)
+			if (_time_ + (DV - targ->last) >= targ->delay)
 			{
-				srv->ok = False;
-				(*srv->func)(srv->argv);
-				srv->last = _time_;
+				targ->turn = false;
+				targ->last = _time_;
+				return true;
 			}
 		}
 		else
 		{
-			if (_time_ + (DV - srv->last) < srv->loop_time)
+			if (_time_ + (DV - targ->last) < targ->delay)
 			{
-				srv->ok = True;
+				targ->turn = true;
+				return false;
 			}
 		}
 	}
+
+	return false;
 }
 
-INLINE byte Task_node_size(Task_node *head)
-{
-	byte ret = 0;
-	while (head->next != 0)
-	{
-		head = head->next;
-		ret++;
-	}
-	return ret;
-}
-
-INLINE byte Service_node_size(Service_node *head)
-{
-	byte ret = 0;
-	while (head->next != 0)
-	{
-		head = head->next;
-		ret++;
-	}
-	return ret;
-}
-
-INLINE void Task_node_run(Task_node **head)
-{
-	while ((*head) != 0)
-	{
-		Task task = Task_node_pop(head);
-		task.func(task.argv);
-	}
-}
-
-INLINE void Task_node_loop_run(Task_node *head)
-{
-	while (head != 0)
-	{
-		head->task.func(head->task.argv);
-		head = head->next;
-	}
-}
-
-INLINE void Service_node_run(Service_node *head)
-{
-	while (head != 0)
-	{
-		run(&head->serv);
-		head = head->next;
-	}
-}
-
-INLINE Task Task_node_pop(Task_node **head)
-{
-	Task_node *tmp = *head;
-	*head = tmp->next;
-	Task ret = tmp->task;
-	free(tmp);
-	return ret;
-}
-
-INLINE byte Task_node_add(Task_node **head, Task task)
+INLINE uint8_t Task_node_add(Task_node **head, Task task)
 {
 	Task_node *new_node = (Task_node *)malloc(sizeof(Task_node));
 
@@ -152,21 +80,19 @@ INLINE byte Task_node_add(Task_node **head, Task task)
 	return new_node->id;
 }
 
-INLINE byte Service_node_add(Service_node **head, Service serv)
+INLINE uint8_t Task_node_size(Task_node *head)
 {
-	Service_node *new_node = (Service_node *)malloc(sizeof(Service_node));
+	uint8_t i = 0;
+	while (head != 0)
+	{
+		head = head->next;
+		i++;
+	}
 
-	if (new_node == 0)
-		return 0;
-
-	new_node->next = *head;
-	new_node->serv = serv;
-	new_node->id = ++__id__;
-	*head = new_node;
-	return new_node->id;
+	return i;
 }
 
-INLINE Node_return Task_node_delete(Task_node **head, byte id)
+INLINE _return_ Task_node_delete(Task_node **head, byte id)
 {
 	Task_node *tmp;
 
@@ -174,9 +100,25 @@ INLINE Node_return Task_node_delete(Task_node **head, byte id)
 	{
 		if (*head == NULL)
 			return Cannot_find;
+
 		tmp = *head;
 		*head = tmp->next;
+
+		switch (tmp->task.type)
+		{
+		case Basic_Task:
+			free(tmp->task.argv);
+			break;
+
+		case Scheduled_Task:
+			free(((Task_arg *)tmp->task.argv)->argv);
+			free(tmp->task.argv);
+
+		default:
+			break;
+		}
 		free(tmp);
+
 		return Success;
 	}
 
@@ -192,83 +134,101 @@ INLINE Node_return Task_node_delete(Task_node **head, byte id)
 	}
 
 	prev->next = tmp->next;
+
+	switch (tmp->task.type)
+	{
+	case Basic_Task:
+		free(tmp->task.argv);
+		break;
+
+	case Scheduled_Task:
+		free(((Task_arg *)tmp->task.argv)->argv);
+		free(tmp->task.argv);
+
+	default:
+		break;
+	}
 	free(tmp);
 
 	return Success;
 }
 
-INLINE Node_return Service_node_delete(Service_node **head, byte id)
+INLINE _return_ Task_node_run(Task_node **head)
 {
-	Service_node *tmp;
-
-	if ((*head)->id == id)
+	Task_node *node = *head;
+	while (node != 0)
 	{
-		if (*head == NULL)
-			return Cannot_find;
-		tmp = *head;
-		*head = tmp->next;
-		free(tmp);
-		return Success;
+		switch (node->task.type)
+		{
+		case Basic_Task:
+			node->task.func(node->task.argv);
+			node->task.count--;
+			break;
+
+		case Scheduled_Task:
+			if (check_time((Task_arg *)node->task.argv))
+			{
+				node->task.func(((Task_arg *)node->task.argv)->argv);
+				node->task.count--;
+			}
+			break;
+
+		case Endless_Task:
+			node->task.func(node->task.argv);
+			break;
+
+		case Scheduled_Endless_Task:
+			if (check_time((Task_arg *)node->task.argv))
+				node->task.func(((Task_arg *)node->task.argv)->argv);
+			break;
+
+		default:
+			Serial.println(F("default"));
+
+			break;
+		}
+
+		if (node->task.count <= 0)
+		{
+			if (Task_node_delete(head, node->id) == Success)
+			{
+				Serial.print(F("Deleted Task_node whose id is "));
+				Serial.println(node->id);
+			}
+			//info(NULL);
+			//print_task_node(*head);
+		}
+
+		node = node->next;
 	}
-
-	tmp = *head;
-	Service_node *prev;
-
-	while (tmp->id != id)
-	{
-		if (tmp == NULL)
-			return Cannot_find;
-		prev = tmp;
-		tmp = tmp->next;
-	}
-
-	prev->next = tmp->next;
-	free(tmp);
 
 	return Success;
 }
 
-#ifdef Long_time
-
-ISR(TIMER1_COMPA_vect)
+INLINE void Task_node_config(Task_node **head)
 {
-	cli();
-
-	second++;
-
-	if (second == 60)
-	{
-		minute++;
-		second = 0;
-	}
-
-	if (minute == 60)
-	{
-		hour++;
-		minute = 0;
-	}
-
-	Serial.println((int)second);
-
-	sei();
+	(*head)->id = 0;
+	(*head)->next = 0;
 }
 
-INLINE void _timer1_set_up(int hz)
+INLINE void dly_init(delay_stc *stc)
 {
-	cli();
-	TCCR1A = 0; // set entire TCCR1A register to 0
-	TCCR1B = 0; // same for TCCR1B
-	TCNT1 = 0;	//initialize counter value to 0
-	// set compare match register
-	OCR1A = (16 * (1000000)) / (hz * 1024) - 1; // = (16*10^6) / (1*1024) - 1 (must be <65536)
-	// turn on CTC mode
-	TCCR1B |= (1 << WGM12);
-	// Set CS12 and CS10 bits for 1024 prescaler
-	TCCR1B |= (1 << CS12) | (1 << CS10);
-	// enable timer compare interrupt
-	TIMSK1 |= (1 << OCIE1A);
-	sei();
+	if (!stc->open)
+		stc->run = true;
+	else if ((_time_ > stc->begin && _time_ - stc->begin >= stc->delay_time) || (_time_ < stc->begin && _time_ - stc->begin + DV >= stc->delay_time))
+	{
+		stc->run = true;
+		stc->delay_time = 0;
+		stc->open = false;
+	}
 }
 
-#endif
-#endif // TASK.H
+INLINE void mydelay(long time, delay_stc *stc)
+{
+	stc->run = false;
+	stc->delay_time = time;
+	stc->begin = _time_;
+	stc->open = true;
+}
+
+#endif // Tash_h
