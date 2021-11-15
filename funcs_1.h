@@ -20,11 +20,15 @@ void blink(void *led_ptr)
 	{
 		digitalWrite(stc->led, LOW);
 		stc->ok = false;
+		//Serial.print(stc->led);
+		//Serial.println(F(" is low."));
 	}
 	else
 	{
 		digitalWrite(stc->led, HIGH);
 		stc->ok = true;
+		//Serial.print(stc->led);
+		//Serial.println(F(" is high."));
 	}
 }
 
@@ -51,7 +55,7 @@ void print_task_node(void *argv)
 
 	Serial.println(F("\n--- Task Node ---"));
 
-	Serial.println(F("No\tadres\tid\ttype\tcount\tnext"));
+	Serial.println(F("No\tadres\tid\ttype\tcount\tnext\tperiod\tlast"));
 
 	do
 	{
@@ -71,7 +75,16 @@ void print_task_node(void *argv)
 		Serial.print(F("\t"));
 		Serial.print(node->task.count);
 		Serial.print(F("\t"));
-		Serial.println((int)node->next);
+		Serial.print((int)node->next);
+		if(node->task.type==Scheduled_Endless_Task || node->task.type==Scheduled_Task)
+		{
+			Task_arg *tmp=(Task_arg*)node->task.argv;
+			Serial.print(F("\t"));
+			Serial.print((long)tmp->delay);
+			Serial.print(F("\t"));
+			Serial.print((long)tmp->last);
+		}
+		Serial.println();
 		node = node->next;
 		i++;
 	} while (node != 0);

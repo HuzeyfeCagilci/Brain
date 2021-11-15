@@ -15,8 +15,8 @@ INLINE Task_arg *Task_arg_create(void *argv, uint64_t delay)
 	Task_arg *task_arg = (Task_arg *)malloc(sizeof(Task_arg));
 	task_arg->argv = argv;
 	task_arg->delay = delay;
-	task_arg->last = DV;
-	task_arg->turn = 0;
+	task_arg->last = 0;
+	task_arg->turn = 1;
 	return task_arg;
 }
 
