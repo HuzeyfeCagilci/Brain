@@ -4,7 +4,7 @@
 #include <Arduino.h>
 
 #define _inline_
-//#define atrr
+#define atrr
 
 #ifdef _inline_
 #ifndef INLINE
@@ -69,7 +69,6 @@ struct Task
 {
 	void (*func)(void *argv);
 	void *argv;
-	/*if count equals to 0 it will run forever*/
 	uint16_t count;
 	_task_type_ type;
 } _atr_;
@@ -77,7 +76,7 @@ struct Task
 struct Task_arg
 {
 	void *argv;
-	uint64_t delay;
+	uint64_t period;
 	uint64_t last;
 	bool turn;
 	//bool running;
@@ -105,7 +104,7 @@ typedef struct Task_node Task_node;
 typedef struct delay_stc delay_stc;
 
 INLINE Task Task_create(void (*func)(void *), void *argv, uint16_t count, _task_type_ type);
-INLINE Task_arg *Task_arg_create(void *argv, uint64_t delay);
+INLINE Task_arg *Task_arg_create(void *argv, uint64_t period);
 
 INLINE bool check_time(Task_arg *targ);
 

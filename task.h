@@ -10,13 +10,18 @@ INLINE Task Task_create(void (*func)(void *), void *argv, uint16_t count, _task_
 	return task;
 }
 
-INLINE Task_arg *Task_arg_create(void *argv, uint64_t delay)
+INLINE Task_arg *Task_arg_create(void *argv, uint64_t period)
 {
 	Task_arg *task_arg = (Task_arg *)malloc(sizeof(Task_arg));
+
+	if (task_arg == 0)
+		return NULL;
+
 	task_arg->argv = argv;
-	task_arg->delay = delay;
+	task_arg->period = period;
 	task_arg->last = 0;
 	task_arg->turn = 1;
+
 	return task_arg;
 }
 
@@ -26,7 +31,7 @@ INLINE bool check_time(Task_arg *targ)
 	{
 		if (targ->turn)
 		{
-			if (_time_ - targ->last >= targ->delay)
+			if (_time_ - targ->last >= targ->period)
 			{
 				targ->turn = false;
 				targ->last = _time_;
@@ -35,7 +40,7 @@ INLINE bool check_time(Task_arg *targ)
 		}
 		else
 		{
-			if (_time_ - targ->last < targ->delay)
+			if (_time_ - targ->last < targ->period)
 			{
 				targ->turn = true;
 				return false;
@@ -46,7 +51,7 @@ INLINE bool check_time(Task_arg *targ)
 	{
 		if (targ->turn)
 		{
-			if (_time_ + (DV - targ->last) >= targ->delay)
+			if (_time_ + (DV - targ->last) >= targ->period)
 			{
 				targ->turn = false;
 				targ->last = _time_;
@@ -55,7 +60,7 @@ INLINE bool check_time(Task_arg *targ)
 		}
 		else
 		{
-			if (_time_ + (DV - targ->last) < targ->delay)
+			if (_time_ + (DV - targ->last) < targ->period)
 			{
 				targ->turn = true;
 				return false;
@@ -68,10 +73,19 @@ INLINE bool check_time(Task_arg *targ)
 
 INLINE uint8_t Task_node_add(Task_node **head, Task task)
 {
-	Task_node *new_node = (Task_node *)malloc(sizeof(Task_node));
+	Task_node *tmp = *head, *new_node = (Task_node *)malloc(sizeof(Task_node));
 
 	if (new_node == 0)
 		return 0;
+
+	while (tmp != 0)
+	{
+		if (tmp->id == __id__)
+		{
+			__id__++;
+		}
+		tmp = tmp->next;
+	}
 
 	new_node->task = task;
 	new_node->next = *head;
@@ -156,6 +170,9 @@ INLINE _return_ Task_node_delete(Task_node **head, byte id)
 INLINE _return_ Task_node_run(Task_node **head)
 {
 	Task_node *node = *head;
+
+	_return_ ret = Success;
+
 	while (node != 0)
 	{
 		switch (node->task.type)
@@ -183,26 +200,27 @@ INLINE _return_ Task_node_run(Task_node **head)
 			break;
 
 		default:
-			Serial.println(F("default"));
+			// Serial.println(F("default"));
 
 			break;
 		}
 
 		if (node->task.count <= 0)
 		{
-			if (Task_node_delete(head, node->id) == Success)
+			ret = Task_node_delete(head, node->id);
+			/*if (Task_node_delete(head, node->id) == Success)
 			{
 				Serial.print(F("Deleted Task_node whose id is "));
 				Serial.println(node->id);
-			}
-			//info(NULL);
-			//print_task_node(*head);
+			}*/
+			// info(NULL);
+			// print_task_node(*head);
 		}
 
 		node = node->next;
 	}
 
-	return Success;
+	return ret;
 }
 
 INLINE void Task_node_config(Task_node **head)

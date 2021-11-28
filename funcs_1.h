@@ -80,7 +80,7 @@ void print_task_node(void *argv)
 		{
 			Task_arg *tmp=(Task_arg*)node->task.argv;
 			Serial.print(F("\t"));
-			Serial.print((long)tmp->delay);
+			Serial.print((long)tmp->period);
 			Serial.print(F("\t"));
 			Serial.print((long)tmp->last);
 		}

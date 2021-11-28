@@ -3,9 +3,10 @@
 #define DV 10000
 
 #include "task.h"
+#include "sys.h"
 #include "funcs_1.h"
+#include "funcs_2.h"
 
-Task_node *head;
 
 void setup()
 {
@@ -30,17 +31,20 @@ void setup()
 	Serial.println(sizeof(blink_stc));
 	Serial.println(F("---------------"));
 
-	Task_node_config(&head);
+	Task_node_config(&System.tasks);
 	info(NULL);
-	Task_node_add(&head, Task_create(blink, Task_arg_create(s, 1000), 4, Scheduled_Task));
-	Task_node_add(&head, Task_create(print_task_node, Task_arg_create(&head, 2000), 4, Scheduled_Task));
-	//Task_node_add(&head, Task_create(info, Task_arg_create(NULL, 2000), 6, Scheduled_Task));
-	//Task_node_add(&head, Task_create(blink, Task_arg_create(s, 1000), 4, Scheduled_Task));
+	//Task_node_add(&System.tasks, Task_create(blink, Task_arg_create(s, 1000), 4, Scheduled_Task));
+	set_blink(LED_BUILTIN, 1000, 1, Scheduled_Endless_Task);
+	
+	Task_node **tmp = (Task_node**)malloc(sizeof(Task_node*));
+	*tmp = System.tasks;
+	
+	Task_node_add(&System.tasks, Task_create(print_task_node, Task_arg_create(tmp, 2000), 2, Scheduled_Task));
+	//Task_node_add(&System.tasks, Task_create(info, Task_arg_create(NULL, 2000), 2, Scheduled_Endless_Task));
 	info(NULL);
-	print_task_node(&head);
+	print_task_node(&System.tasks);
 
 	Serial.println(F("ok"));
-	//Serial.println(Task_node_size(head));
 
 	//delay(5000);
 }
@@ -48,5 +52,5 @@ void setup()
 void loop()
 {
 	UPT;
-	Task_node_run(&head);
+	Task_node_run(&System.tasks);
 }
