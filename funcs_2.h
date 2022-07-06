@@ -19,7 +19,9 @@ _return_ set_blink(byte pin, uint64_t period, uint8_t count, _task_type_ type)
 
 	bs->led = pin;
 
-	Task_node_add(&System.tasks, Task_create(blink, Task_arg_create(bs, period), count, type));
+	/*System.ids[pin] = */ Task_node_add(&System.tasks, Task_create(blink, Task_arg_create(bs, period), count, type));
+
+	System.pins[pin] = 1;
 
 	return Success;
 }

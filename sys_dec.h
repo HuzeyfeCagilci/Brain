@@ -10,10 +10,11 @@ void Sleep_no_task(void *);
 
 struct system
 {
-	Task_node * tasks;
-	Task_node * sys_tasks;
-	Task_node * tmp;
-	bool pins [16];
-}_atr_;
+	Task_node *tasks;
+	Task_node *sys_tasks;
+	Task_node *tmp;
+	bool pins[16];
+	// uint8_t ids[16];
+} _atr_;
 
 #endif

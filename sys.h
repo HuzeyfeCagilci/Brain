@@ -19,7 +19,7 @@ void Sleep_no_task(void *)
 	if(Task_node_size(System.tasks)==0 && Task_node_size(System.tmp)==0)
 	{
 		Watchdog.enable();
-		Serial.println("Uyku...");
+		Serial.println(F("Sleep..."));
 		delay(1000);
 		Watchdog.sleep();
 	}

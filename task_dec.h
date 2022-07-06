@@ -3,9 +3,6 @@
 
 #include <Arduino.h>
 
-#define _inline_
-#define atrr
-
 #ifdef _inline_
 #ifndef INLINE
 #define INLINE inline
@@ -62,7 +59,8 @@ typedef enum
 	Basic_Task,
 	Scheduled_Task,
 	Endless_Task,
-	Scheduled_Endless_Task
+	Scheduled_Endless_Task,
+	Stopped_Task
 } _task_type_;
 
 struct Task
@@ -114,6 +112,8 @@ INLINE _return_ Task_node_delete(Task_node **head, byte id);
 INLINE _return_ Task_node_run(Task_node **head);
 
 INLINE void Task_node_config(Task_node **head);
+INLINE Task_node * Task_node_addr(Task_node *head, uint8_t id);
+INLINE _return_ Task_node_change_type(Task_node *head, uint8_t id, _task_type_ type);
 
 // Use this at the top of function.
 INLINE void dly_init(delay_stc *stc);

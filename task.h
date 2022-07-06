@@ -229,6 +229,30 @@ INLINE void Task_node_config(Task_node **head)
 	(*head)->next = 0;
 }
 
+INLINE Task_node *Task_node_addr(Task_node *head, uint8_t id)
+{
+	while (head)
+	{
+		if (head->id == id)
+			return head;
+		head = head->next;
+	}
+
+	return 0;
+}
+
+INLINE _return_ Task_node_change_type(Task_node *head, uint8_t id, _task_type_ type)
+{
+	head = Task_node_addr(head, id);
+
+	if (head)
+		head->task.type = type;
+	else
+		return Cannot_find;
+
+	return Success;
+}
+
 INLINE void dly_init(delay_stc *stc)
 {
 	if (!stc->open)
