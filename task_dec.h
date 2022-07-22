@@ -33,14 +33,10 @@
 uint64_t _time_;
 uint8_t __id__;
 
-/*
- _time_ = millis() % DV;
-	 _time_ is the remainder after millis() is divided by DV.
-	 Unless this method, there will be overflow errors.
-	 If you want microseconds use this instead of it:
-	_time_ = micros() % DV;
-
- */
+/* _time_ is the remainder after millis() is divided by DV.
+ * Unless this method, there will be overflow errors.
+ * If you want microseconds use this instead of it:
+ * _time_ = micros() % DV; */
 #ifndef UPT
 #define UPT (_time_ = millis() % DV)
 #endif
@@ -77,7 +73,6 @@ struct Task_arg
 	uint64_t period;
 	uint64_t last;
 	bool turn;
-	//bool running;
 } _atr_;
 
 struct Task_node
@@ -103,21 +98,19 @@ typedef struct delay_stc delay_stc;
 
 INLINE Task Task_create(void (*func)(void *), void *argv, uint16_t count, _task_type_ type);
 INLINE Task_arg *Task_arg_create(void *argv, uint64_t period);
-
 INLINE bool check_time(Task_arg *targ);
 
 INLINE uint8_t Task_node_add(Task_node **head, Task task);
 INLINE uint8_t Task_node_size(Task_node *head);
 INLINE _return_ Task_node_delete(Task_node **head, byte id);
 INLINE _return_ Task_node_run(Task_node **head);
-
 INLINE void Task_node_config(Task_node **head);
 INLINE Task_node * Task_node_addr(Task_node *head, uint8_t id);
 INLINE _return_ Task_node_change_type(Task_node *head, uint8_t id, _task_type_ type);
 
-// Use this at the top of function.
+/* Use this at the top of function. */
 INLINE void dly_init(delay_stc *stc);
-// Use this where you want to delay.
+/* Use this where you want to delay. */
 INLINE void mydelay(long time, delay_stc *stc);
 
 /* Example for using delay_stc

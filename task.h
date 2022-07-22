@@ -71,6 +71,10 @@ INLINE bool check_time(Task_arg *targ)
 	return false;
 }
 
+/* Allocates memory space and writes the task on the space. 
+ * Adds the new node on head not tail.
+ * 	Before : (head) node_1 -> node_2 ...
+ *	After  : (head) new_node -> node_1 -> node_2 ... */
 INLINE uint8_t Task_node_add(Task_node **head, Task task)
 {
 	Task_node *tmp = *head, *new_node = (Task_node *)malloc(sizeof(Task_node));
@@ -106,6 +110,11 @@ INLINE uint8_t Task_node_size(Task_node *head)
 	return i;
 }
 
+/* If task.type is Basic_Task 
+ * 	- free argv
+ * If task.type is Scheduled_Task
+ *	- free argv
+ *	- free argv -> argv */
 INLINE _return_ Task_node_delete(Task_node **head, byte id)
 {
 	Task_node *tmp;
@@ -131,8 +140,8 @@ INLINE _return_ Task_node_delete(Task_node **head, byte id)
 		default:
 			break;
 		}
+		
 		free(tmp);
-
 		return Success;
 	}
 
@@ -162,13 +171,15 @@ INLINE _return_ Task_node_delete(Task_node **head, byte id)
 	default:
 		break;
 	}
+	
 	free(tmp);
-
 	return Success;
 }
 
+
 INLINE _return_ Task_node_run(Task_node **head)
 {
+	UPT;	/* Update _time_ */
 	Task_node *node = *head;
 
 	_return_ ret = Success;
