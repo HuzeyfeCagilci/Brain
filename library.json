@@ -1,0 +1,18 @@
+{
+	"name": "Brain",
+	"keywords": "multitasking, task, taskscheduler, scheduling",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/HuzeyfeCagilci/Brain"
+	},
+	"authors": [
+		{
+			"name": "Huzeyfe Çağılcı",
+			"email": "huzeyfe.cagilci@outlook.com",
+			"url": "https://github.com/HuzeyfeCagilci",
+		}
+	],
+	"version": "1.0.0",
+	"frameworks": "arduino",
+	"platforms": "*"
+}
