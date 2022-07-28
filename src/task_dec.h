@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-#ifdef _inline_
+#ifndef no_inline
 #ifndef INLINE
 #define INLINE inline
 #endif // INLINE
@@ -11,15 +11,15 @@
 #ifndef INLINE
 #define INLINE
 #endif // INLINE
-#endif // _inline_
+#endif // no_inline
 
-#ifdef atrr
+#ifndef no_atr
 #ifndef _atr_
 #define _atr_ __attribute__((packed, aligned(1)))
 #endif // _atr_
 #else
 #define _atr_
-#endif // attr
+#endif // no_atr
 
 #ifndef DV
 #define DV 100000
@@ -30,8 +30,8 @@
 	  in loop() function
 		  _time_ = millis() % DV
   */
-uint64_t _time_;
-uint8_t __id__;
+u32 _time_;
+u8 __id__;
 
 /* _time_ is the remainder after millis() is divided by DV.
  * Unless this method, there will be overflow errors.
@@ -50,43 +50,44 @@ typedef enum
 	Other_fail
 } _return_;
 
-typedef enum
+enum _task_type_
 {
 	Basic_Task,
 	Scheduled_Task,
 	Endless_Task,
 	Scheduled_Endless_Task,
 	Stopped_Task
-} _task_type_;
+} _atr_;
 
 struct Task
 {
 	void (*func)(void *argv);
 	void *argv;
-	uint16_t count;
-	_task_type_ type;
+	u16 count;
+	u8 type;
 } _atr_;
 
 struct Task_arg
 {
 	void *argv;
-	uint64_t period;
-	uint64_t last;
-	bool turn;
+	u32 period;
+	/*31 bit for last, 1 bit for turn.*/
+	u32 last;
+	// bool turn;
 } _atr_;
 
 struct Task_node
 {
 	Task task;
 	struct Task_node *next;
-	uint8_t id;
+	u8 id;
 } _atr_;
 
 struct delay_stc
 {
-	uint64_t delay_time;
-	uint64_t begin;
-	uint8_t no;
+	u32 delay_time;
+	u32 begin;
+	u8 no;
 	_Bool run;
 	_Bool open;
 } _atr_;
@@ -95,18 +96,19 @@ typedef struct Task Task;
 typedef struct Task_arg Task_arg;
 typedef struct Task_node Task_node;
 typedef struct delay_stc delay_stc;
+typedef enum _task_type_ _task_type_;
 
-INLINE Task Task_create(void (*func)(void *), void *argv, uint16_t count, _task_type_ type);
-INLINE Task_arg *Task_arg_create(void *argv, uint64_t period);
+INLINE Task Task_create(void (*func)(void *), void *argv, u16 count, _task_type_ type);
+INLINE Task_arg *Task_arg_create(void *argv, u32 period);
 INLINE bool check_time(Task_arg *targ);
 
-INLINE uint8_t Task_node_add(Task_node **head, Task task);
-INLINE uint8_t Task_node_size(Task_node *head);
+INLINE u8 Task_node_add(Task_node **head, Task task);
+INLINE u8 Task_node_size(Task_node *head);
 INLINE _return_ Task_node_delete(Task_node **head, byte id);
 INLINE _return_ Task_node_run(Task_node **head);
 INLINE void Task_node_config(Task_node **head);
-INLINE Task_node * Task_node_addr(Task_node *head, uint8_t id);
-INLINE _return_ Task_node_change_type(Task_node *head, uint8_t id, _task_type_ type);
+INLINE Task_node *Task_node_addr(Task_node *head, u8 id);
+INLINE _return_ Task_node_change_type(Task_node *head, u8 id, _task_type_ type);
 
 /* Use this at the top of function. */
 INLINE void dly_init(delay_stc *stc);
@@ -135,7 +137,7 @@ void foo(void *)
 			mydelay(1000, &stc);
 			break;
 
-		default: 
+		default:
 			stc.no = 0;
 			break;
 		}

@@ -5,7 +5,7 @@
 #include "funcs_1.h"
 #include "sys.h"
 
-_return_ set_blink(byte pin, uint64_t period, uint8_t count, _task_type_ type)
+_return_ set_blink(byte pin, u32 period, u8 count, _task_type_ type)
 {
 	if (System.pins[pin])
 		return Pin_is_busy;
