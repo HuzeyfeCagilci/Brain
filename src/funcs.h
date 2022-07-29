@@ -1,9 +1,10 @@
-#ifndef FUNCS_1_H
-#define FUNCS_1_H
+// Not tested
 
-#include "funcs_1_dec.h"
-#include "task.h"
-//#include "sys.h"
+#ifndef FUNCS_H
+#define FUNCS_H
+
+#include "funcs_dec.h"
+#include "sys.h"
 
 int freeRam()
 {
@@ -98,4 +99,25 @@ void print_task(void *argv)
 	Serial.println((int)node->next);
 }
 
-#endif // FUNCS_1_H
+_return_ set_blink(byte pin, u32 period, u8 count, _task_type_ type)
+{
+	if (System.pins[pin])
+		return Pin_is_busy;
+
+	pinMode(pin, OUTPUT);
+
+	blink_stc *bs = (blink_stc *)malloc(sizeof(blink_stc));
+
+	if (bs == 0)
+		return Malloc_fail;
+
+	bs->led = pin;
+
+	/*System.ids[pin] = */ Task_node_add(&System.tasks, Task_create(blink, Task_arg_create(bs, period), count, type));
+
+	System.pins[pin] = 1;
+
+	return Success;
+}
+
+#endif // FUNCS_H
