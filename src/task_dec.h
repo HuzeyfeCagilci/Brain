@@ -4,19 +4,13 @@
 #include <Arduino.h>
 
 #ifndef no_inline
-#ifndef INLINE
 #define INLINE inline
-#endif // INLINE
 #else
-#ifndef INLINE
 #define INLINE
-#endif // INLINE
 #endif // no_inline
 
 #ifndef no_atr
-#ifndef _atr_
 #define _atr_ __attribute__((packed, aligned(1)))
-#endif // _atr_
 #else
 #define _atr_
 #endif // no_atr
@@ -31,7 +25,6 @@
 		  _time_ = millis() % DV
   */
 u32 _time_;
-u8 __id__;
 
 /* _time_ is the remainder after millis() is divided by DV.
  * Unless this method, there will be overflow errors.
@@ -80,7 +73,7 @@ struct Task_node
 {
 	Task task;
 	struct Task_node *next;
-	u8 id;
+	u16 id;
 } _atr_;
 
 struct delay_stc
@@ -98,11 +91,24 @@ typedef struct Task_node Task_node;
 typedef struct delay_stc delay_stc;
 typedef enum _task_type_ _task_type_;
 
+#ifdef enable_hash
+
+#ifndef type_hash
+#define type_hash unsigned short
+#endif
+
+INLINE void _hash(type_hash *h, int x);
+INLINE void hash_str(type_hash *h, char *s);
+
+#else
+u8 __id__;
+#endif
+
 INLINE Task Task_create(void (*func)(void *), void *argv, u16 count, _task_type_ type);
 INLINE Task_arg *Task_arg_create(void *argv, u32 period);
 INLINE bool check_time(Task_arg *targ);
 
-INLINE u8 Task_node_add(Task_node **head, Task task);
+INLINE u16 Task_node_add(Task_node **head, Task task);
 INLINE u8 Task_node_size(Task_node *head);
 INLINE _return_ Task_node_delete(Task_node **head, byte id);
 INLINE _return_ Task_node_run(Task_node **head);

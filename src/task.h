@@ -4,6 +4,23 @@
 #include <stdlib.h>
 #include "task_dec.h"
 
+INLINE void _hash(type_hash *h, int x)
+{
+
+	int n = 545392;
+	*h = ((*h) << 4) + x ^ n + ((*h) >> 4);
+}
+
+INLINE void hash_str(type_hash *h, char *s)
+{
+	int i = 0;
+	while (s[i])
+	{
+		_hash(h, (int)(s[i]));
+		i++;
+	}
+}
+
 INLINE Task Task_create(void (*func)(void *), void *argv, u16 count, _task_type_ type)
 {
 	Task task = {func, argv, count, type};
@@ -81,13 +98,11 @@ INLINE bool check_time(Task_arg *targ)
  * Adds the new node on head not tail.
  * 	Before : (head) node_1 -> node_2 ...
  *	After  : (head) new_node -> node_1 -> node_2 ... */
-INLINE u8 Task_node_add(Task_node **head, Task task)
+INLINE u16 Task_node_add(Task_node **head, Task task)
 {
-	Task_node *tmp = *head, *new_node = (Task_node *)malloc(sizeof(Task_node));
+#ifndef enable_hash
 
-	if (new_node == 0)
-		return 0;
-
+	Task_node *tmp = *head;
 	while (tmp != 0)
 	{
 		if (tmp->id == __id__)
@@ -97,9 +112,23 @@ INLINE u8 Task_node_add(Task_node **head, Task task)
 		tmp = tmp->next;
 	}
 
+#endif
+
+	Task_node *new_node = (Task_node *)malloc(sizeof(Task_node));
+
+	if (new_node == 0)
+		return 0;
+
 	new_node->task = task;
 	new_node->next = *head;
-	new_node->id = ++__id__;
+
+#ifdef enable_hash
+	_hash(&new_node->id, head->id);
+#else
+	new_node->id = __id__;
+
+#endif
+
 	*head = new_node;
 	return new_node->id;
 }

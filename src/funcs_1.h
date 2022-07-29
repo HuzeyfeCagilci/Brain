@@ -20,15 +20,11 @@ void blink(void *led_ptr)
 	{
 		digitalWrite(stc->led, LOW);
 		stc->ok = false;
-		//Serial.print(stc->led);
-		//Serial.println(F(" is low."));
 	}
 	else
 	{
 		digitalWrite(stc->led, HIGH);
 		stc->ok = true;
-		//Serial.print(stc->led);
-		//Serial.println(F(" is high."));
 	}
 }
 
@@ -61,7 +57,7 @@ void print_task_node(void *argv)
 	{
 		if (i > 10)
 		{
-			Serial.println(F("Aşım gerçekleşti."));
+			Serial.println(F("Overflow error"));
 			return;
 		}
 
@@ -76,9 +72,9 @@ void print_task_node(void *argv)
 		Serial.print(node->task.count);
 		Serial.print(F("\t"));
 		Serial.print((int)node->next);
-		if(node->task.type==Scheduled_Endless_Task || node->task.type==Scheduled_Task)
+		if (node->task.type == Scheduled_Endless_Task || node->task.type == Scheduled_Task)
 		{
-			Task_arg *tmp=(Task_arg*)node->task.argv;
+			Task_arg *tmp = (Task_arg *)node->task.argv;
 			Serial.print(F("\t"));
 			Serial.print((long)tmp->period);
 			Serial.print(F("\t"));
