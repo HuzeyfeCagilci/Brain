@@ -91,11 +91,11 @@ typedef struct Task_node Task_node;
 typedef struct delay_stc delay_stc;
 typedef enum _task_type_ _task_type_;
 
-#ifdef enable_hash
-
 #ifndef type_hash
 #define type_hash unsigned short
 #endif
+
+#ifdef enable_hash
 
 INLINE void _hash(type_hash *h, int x);
 INLINE void hash_str(type_hash *h, char *s);
@@ -110,11 +110,11 @@ INLINE bool check_time(Task_arg *targ);
 
 INLINE u16 Task_node_add(Task_node **head, Task task);
 INLINE u8 Task_node_size(Task_node *head);
-INLINE _return_ Task_node_delete(Task_node **head, byte id);
+INLINE _return_ Task_node_delete(Task_node **head, u16 id);
 INLINE _return_ Task_node_run(Task_node **head);
 INLINE void Task_node_config(Task_node **head);
-INLINE Task_node *Task_node_addr(Task_node *head, u8 id);
-INLINE _return_ Task_node_change_type(Task_node *head, u8 id, _task_type_ type);
+INLINE Task_node *Task_node_addr(Task_node *head, u16 id);
+INLINE _return_ Task_node_change_type(Task_node *head, u16 id, _task_type_ type);
 
 /* Use this at the top of function. */
 INLINE void dly_init(delay_stc *stc);

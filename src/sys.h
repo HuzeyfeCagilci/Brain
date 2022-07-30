@@ -7,7 +7,9 @@ struct system System;
 
 void Sys_setup()
 {
+	#ifndef enable_hash
 	__id__ = 0;
+	#endif
 	Task_node_config(&System.tasks);
 	Task_node_config(&System.sys_tasks);
 	Task_node_config(&System.tmp);

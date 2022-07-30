@@ -7,8 +7,8 @@
 INLINE void _hash(type_hash *h, int x)
 {
 
-	int n = 545392;
-	*h = ((*h) << 4) + x ^ n + ((*h) >> 4);
+	int n = 672005;
+	*h = ((*h) << 4) + (x ^ n) + ((*h) >> 4);
 }
 
 INLINE void hash_str(type_hash *h, char *s)
@@ -101,7 +101,6 @@ INLINE bool check_time(Task_arg *targ)
 INLINE u16 Task_node_add(Task_node **head, Task task)
 {
 #ifndef enable_hash
-
 	Task_node *tmp = *head;
 	while (tmp != 0)
 	{
@@ -111,7 +110,6 @@ INLINE u16 Task_node_add(Task_node **head, Task task)
 		}
 		tmp = tmp->next;
 	}
-
 #endif
 
 	Task_node *new_node = (Task_node *)malloc(sizeof(Task_node));
@@ -121,12 +119,12 @@ INLINE u16 Task_node_add(Task_node **head, Task task)
 
 	new_node->task = task;
 	new_node->next = *head;
+	new_node->id = (u16)&task.func;
 
 #ifdef enable_hash
-	_hash(&new_node->id, head->id);
+	_hash(&new_node->id, (*head)->id);
 #else
 	new_node->id = __id__;
-
 #endif
 
 	*head = new_node;
@@ -150,7 +148,7 @@ INLINE u8 Task_node_size(Task_node *head)
  * If task.type is Scheduled_Task
  *	- free argv
  *	- free argv -> argv */
-INLINE _return_ Task_node_delete(Task_node **head, byte id)
+INLINE _return_ Task_node_delete(Task_node **head, u16 id)
 {
 	Task_node *tmp;
 
@@ -245,22 +243,11 @@ INLINE _return_ Task_node_run(Task_node **head)
 			break;
 
 		default:
-			// Serial.println(F("default"));
-
 			break;
 		}
 
 		if (node->task.count <= 0)
-		{
 			ret = Task_node_delete(head, node->id);
-			/*if (Task_node_delete(head, node->id) == Success)
-			{
-				Serial.print(F("Deleted Task_node whose id is "));
-				Serial.println(node->id);
-			}*/
-			// info(NULL);
-			// print_task_node(*head);
-		}
 
 		node = node->next;
 	}

@@ -1,5 +1,3 @@
-// Not tested
-
 #ifndef FUNCS_H
 #define FUNCS_H
 
@@ -56,7 +54,7 @@ void print_task_node(void *argv)
 
 	do
 	{
-		if (i > 10)
+		if (i > 50)
 		{
 			Serial.println(F("Overflow error"));
 			return;
@@ -64,22 +62,22 @@ void print_task_node(void *argv)
 
 		Serial.print(i);
 		Serial.print(F("\t"));
-		Serial.print((int)node);
+		Serial.print((int)node, HEX);
 		Serial.print(F("\t"));
-		Serial.print(node->id);
+		Serial.print(node->id, HEX);
 		Serial.print(F("\t"));
 		Serial.print(node->task.type);
 		Serial.print(F("\t"));
 		Serial.print(node->task.count);
 		Serial.print(F("\t"));
-		Serial.print((int)node->next);
+		Serial.print((u32)node->next, HEX);
 		if (node->task.type == Scheduled_Endless_Task || node->task.type == Scheduled_Task)
 		{
 			Task_arg *tmp = (Task_arg *)node->task.argv;
 			Serial.print(F("\t"));
 			Serial.print((long)tmp->period);
 			Serial.print(F("\t"));
-			Serial.print((long)tmp->last);
+			Serial.print((u32)(tmp->last)&(~((long)1<<31)), HEX);
 		}
 		Serial.println();
 		node = node->next;
@@ -99,6 +97,7 @@ void print_task(void *argv)
 	Serial.println((int)node->next);
 }
 
+/* Set a blink function easily. */
 _return_ set_blink(byte pin, u32 period, u8 count, _task_type_ type)
 {
 	if (System.pins[pin])
