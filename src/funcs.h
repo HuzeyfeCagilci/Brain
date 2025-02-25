@@ -1,9 +1,8 @@
-#ifndef FUNCS_1_H
-#define FUNCS_1_H
+#ifndef FUNCS_H
+#define FUNCS_H
 
-#include "funcs_1_dec.h"
-#include "task.h"
-//#include "sys.h"
+#include "funcs_dec.h"
+#include "sys.h"
 
 int freeRam()
 {
@@ -20,15 +19,11 @@ void blink(void *led_ptr)
 	{
 		digitalWrite(stc->led, LOW);
 		stc->ok = false;
-		//Serial.print(stc->led);
-		//Serial.println(F(" is low."));
 	}
 	else
 	{
 		digitalWrite(stc->led, HIGH);
 		stc->ok = true;
-		//Serial.print(stc->led);
-		//Serial.println(F(" is high."));
 	}
 }
 
@@ -59,30 +54,30 @@ void print_task_node(void *argv)
 
 	do
 	{
-		if (i > 10)
+		if (i > 50)
 		{
-			Serial.println(F("Aşım gerçekleşti."));
+			Serial.println(F("Overflow error"));
 			return;
 		}
 
 		Serial.print(i);
 		Serial.print(F("\t"));
-		Serial.print((int)node);
+		Serial.print((int)node, HEX);
 		Serial.print(F("\t"));
-		Serial.print(node->id);
+		Serial.print(node->id, HEX);
 		Serial.print(F("\t"));
 		Serial.print(node->task.type);
 		Serial.print(F("\t"));
 		Serial.print(node->task.count);
 		Serial.print(F("\t"));
-		Serial.print((int)node->next);
-		if(node->task.type==Scheduled_Endless_Task || node->task.type==Scheduled_Task)
+		Serial.print((u32)node->next, HEX);
+		if (node->task.type == Scheduled_Endless_Task || node->task.type == Scheduled_Task)
 		{
-			Task_arg *tmp=(Task_arg*)node->task.argv;
+			Task_arg *tmp = (Task_arg *)node->task.argv;
 			Serial.print(F("\t"));
 			Serial.print((long)tmp->period);
 			Serial.print(F("\t"));
-			Serial.print((long)tmp->last);
+			Serial.print((u32)(tmp->last)&(~((long)1<<31)), HEX);
 		}
 		Serial.println();
 		node = node->next;
@@ -102,4 +97,26 @@ void print_task(void *argv)
 	Serial.println((int)node->next);
 }
 
-#endif // FUNCS_1_H
+/* Set a blink function easily. */
+_return_ set_blink(byte pin, u32 period, u8 count, _task_type_ type)
+{
+	if (System.pins[pin])
+		return Pin_is_busy;
+
+	pinMode(pin, OUTPUT);
+
+	blink_stc *bs = (blink_stc *)malloc(sizeof(blink_stc));
+
+	if (bs == 0)
+		return Malloc_fail;
+
+	bs->led = pin;
+
+	/*System.ids[pin] = */ Task_node_add(&System.tasks, Task_create(blink, Task_arg_create(bs, period), count, type));
+
+	System.pins[pin] = 1;
+
+	return Success;
+}
+
+#endif // FUNCS_H

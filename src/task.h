@@ -4,13 +4,30 @@
 #include <stdlib.h>
 #include "task_dec.h"
 
-INLINE Task Task_create(void (*func)(void *), void *argv, uint16_t count, _task_type_ type)
+INLINE void _hash(type_hash *h, int x)
+{
+
+	int n = 672005;
+	*h = ((*h) << 4) + (x ^ n) + ((*h) >> 4);
+}
+
+INLINE void hash_str(type_hash *h, char *s)
+{
+	int i = 0;
+	while (s[i])
+	{
+		_hash(h, (int)(s[i]));
+		i++;
+	}
+}
+
+INLINE Task Task_create(void (*func)(void *), void *argv, u16 count, _task_type_ type)
 {
 	Task task = {func, argv, count, type};
 	return task;
 }
 
-INLINE Task_arg *Task_arg_create(void *argv, uint64_t period)
+INLINE Task_arg *Task_arg_create(void *argv, u32 period)
 {
 	Task_arg *task_arg = (Task_arg *)malloc(sizeof(Task_arg));
 
@@ -20,68 +37,71 @@ INLINE Task_arg *Task_arg_create(void *argv, uint64_t period)
 	task_arg->argv = argv;
 	task_arg->period = period;
 	task_arg->last = 0;
-	task_arg->turn = 1;
+	task_arg->last = (u32)1 << 31;
 
 	return task_arg;
 }
 
 INLINE bool check_time(Task_arg *targ)
 {
-	if (targ->last <= _time_)
+	bool ret = false;
+	u8 turn = targ->last >> 31;
+	u32 last = (u32)(targ->last << 1) >> 1;
+
+	if (last <= _time_)
 	{
-		if (targ->turn)
+		if (turn)
 		{
-			if (_time_ - targ->last >= targ->period)
+			if (_time_ - last >= targ->period)
 			{
-				targ->turn = false;
-				targ->last = _time_;
-				return true;
+				turn = 0;
+				last = _time_;
+				ret = true;
 			}
 		}
 		else
 		{
-			if (_time_ - targ->last < targ->period)
+			if (_time_ - last < targ->period)
 			{
-				targ->turn = true;
-				return false;
+				turn = 1;
+				ret = false;
 			}
 		}
 	}
 	else
 	{
-		if (targ->turn)
+		if (turn)
 		{
-			if (_time_ + (DV - targ->last) >= targ->period)
+			if (_time_ + (DV - last) >= targ->period)
 			{
-				targ->turn = false;
-				targ->last = _time_;
-				return true;
+				turn = 0;
+				last = _time_;
+				ret = true;
 			}
 		}
 		else
 		{
-			if (_time_ + (DV - targ->last) < targ->period)
+			if (_time_ + (DV - last) < targ->period)
 			{
-				targ->turn = true;
-				return false;
+				turn = 1;
+				ret = false;
 			}
 		}
 	}
 
-	return false;
+	targ->last = ((last << 1) >> 1) | ((((u32)turn)) << 31);
+
+	return ret;
 }
 
-/* Allocates memory space and writes the task on the space. 
+/* Allocates memory space and writes the task on the space.
  * Adds the new node on head not tail.
  * 	Before : (head) node_1 -> node_2 ...
  *	After  : (head) new_node -> node_1 -> node_2 ... */
-INLINE uint8_t Task_node_add(Task_node **head, Task task)
+INLINE u16 Task_node_add(Task_node **head, Task task)
 {
-	Task_node *tmp = *head, *new_node = (Task_node *)malloc(sizeof(Task_node));
-
-	if (new_node == 0)
-		return 0;
-
+#ifndef enable_hash
+	Task_node *tmp = *head;
 	while (tmp != 0)
 	{
 		if (tmp->id == __id__)
@@ -90,17 +110,30 @@ INLINE uint8_t Task_node_add(Task_node **head, Task task)
 		}
 		tmp = tmp->next;
 	}
+#endif
+
+	Task_node *new_node = (Task_node *)malloc(sizeof(Task_node));
+
+	if (new_node == 0)
+		return 0;
 
 	new_node->task = task;
 	new_node->next = *head;
-	new_node->id = ++__id__;
+	new_node->id = (u16)&task.func;
+
+#ifdef enable_hash
+	_hash(&new_node->id, (*head)->id);
+#else
+	new_node->id = __id__;
+#endif
+
 	*head = new_node;
 	return new_node->id;
 }
 
-INLINE uint8_t Task_node_size(Task_node *head)
+INLINE u8 Task_node_size(Task_node *head)
 {
-	uint8_t i = 0;
+	u8 i = 0;
 	while (head != 0)
 	{
 		head = head->next;
@@ -110,12 +143,12 @@ INLINE uint8_t Task_node_size(Task_node *head)
 	return i;
 }
 
-/* If task.type is Basic_Task 
+/* If task.type is Basic_Task
  * 	- free argv
  * If task.type is Scheduled_Task
  *	- free argv
  *	- free argv -> argv */
-INLINE _return_ Task_node_delete(Task_node **head, byte id)
+INLINE _return_ Task_node_delete(Task_node **head, u16 id)
 {
 	Task_node *tmp;
 
@@ -140,7 +173,7 @@ INLINE _return_ Task_node_delete(Task_node **head, byte id)
 		default:
 			break;
 		}
-		
+
 		free(tmp);
 		return Success;
 	}
@@ -171,15 +204,14 @@ INLINE _return_ Task_node_delete(Task_node **head, byte id)
 	default:
 		break;
 	}
-	
+
 	free(tmp);
 	return Success;
 }
 
-
 INLINE _return_ Task_node_run(Task_node **head)
 {
-	UPT;	/* Update _time_ */
+	UPT; /* Update _time_ */
 	Task_node *node = *head;
 
 	_return_ ret = Success;
@@ -211,22 +243,11 @@ INLINE _return_ Task_node_run(Task_node **head)
 			break;
 
 		default:
-			// Serial.println(F("default"));
-
 			break;
 		}
 
 		if (node->task.count <= 0)
-		{
 			ret = Task_node_delete(head, node->id);
-			/*if (Task_node_delete(head, node->id) == Success)
-			{
-				Serial.print(F("Deleted Task_node whose id is "));
-				Serial.println(node->id);
-			}*/
-			// info(NULL);
-			// print_task_node(*head);
-		}
 
 		node = node->next;
 	}
@@ -240,7 +261,7 @@ INLINE void Task_node_config(Task_node **head)
 	(*head)->next = 0;
 }
 
-INLINE Task_node *Task_node_addr(Task_node *head, uint8_t id)
+INLINE Task_node *Task_node_addr(Task_node *head, u8 id)
 {
 	while (head)
 	{
@@ -252,7 +273,7 @@ INLINE Task_node *Task_node_addr(Task_node *head, uint8_t id)
 	return 0;
 }
 
-INLINE _return_ Task_node_change_type(Task_node *head, uint8_t id, _task_type_ type)
+INLINE _return_ Task_node_change_type(Task_node *head, u8 id, _task_type_ type)
 {
 	head = Task_node_addr(head, id);
 
